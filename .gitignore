@@ -1,0 +1,16 @@
+node_modules/
+dist/
+*.tsbuildinfo
+test-results/
+playwright-report/
+*-check.png
+oneface-*.png
+.env
+.env.*
+public/assets/
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.mp4
