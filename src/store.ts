@@ -3,12 +3,14 @@ import {fresh,turn,inverse,scramble,solvedFaces,faces,type Move,type Piece,type 
 import {prepareRound,firstVictory,type Victory} from './round';
 export type Active={move:Move;started:number;undo:boolean};
 type State={
+ viewFace:number;setViewFace:(face:number)=>void;
  mode:'one'|'six';phase:'ready'|'mixing'|'playing'|'won';victory:Victory|null;playMoves:number;lastMix:number;
  displaySize:'small'|'medium'|'large';pieces:Piece[];active:Active|null;pending:Move[];history:Move[];selection:Sticker|null;
  moved:boolean;gap:number;reduced:boolean;resetView:number;preview:string|null;notice:string;
  move:(m:Move)=>void;finish:()=>void;undo:()=>void;reset:()=>void;mix:(n:number)=>void;select:(s:Sticker|null)=>void;setMode:(mode:'one'|'six')=>void;
 };
 export const useGame=create<State>((set,get)=>({
+ viewFace:0,setViewFace:face=>{const s=get();if(s.active||s.phase==='won'||!Number.isInteger(face)||face<0||face>5)return;set({viewFace:face,selection:null,preview:null,resetView:s.resetView+1});},
  mode:'one',phase:'ready',victory:null,playMoves:0,lastMix:3,displaySize:'medium',
  pieces:fresh(),active:null,pending:[],history:[],selection:null,moved:false,gap:.12,
  reduced:typeof matchMedia!=='undefined'&&matchMedia('(prefers-reduced-motion: reduce)').matches,

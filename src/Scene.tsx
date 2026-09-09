@@ -2,6 +2,7 @@ import {useEffect,useRef} from 'react';
 import * as T from 'three';
 import {useGame} from './store';
 import {captureControls,type Controls} from './controls';
+import {faceView,DEFAULT_YAW,wrapYaw} from './view';
 import {stickers,faces,transform,solvedFaces,type Move,type Axis,type Vec} from './model';
 
 export function Scene(){
@@ -13,7 +14,8 @@ export function Scene(){
  el.appendChild(renderer.domElement);const canvas=renderer.domElement;
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(37,1,.1,100); camera.position.z=9;
  const root=new T.Group();scene.add(root);
- const initial=()=>root.quaternion.setFromEuler(new T.Euler(-.30,.48,0));
+ let yaw=DEFAULT_YAW;
+ const initial=()=>{yaw=DEFAULT_YAW;root.quaternion.copy(faceView(useGame.getState().viewFace,yaw));};
  initial();
  scene.add(new T.HemisphereLight(0xffffff,0xb1a19a,2.5));
  const light=new T.DirectionalLight(0xffffff,3);light.position.set(3,5,7);scene.add(light);
@@ -54,7 +56,7 @@ export function Scene(){
  const ray=new T.Raycaster(),pointer=new T.Vector2(),matrix=new T.Matrix4(),dummy=new T.Object3D();
  let disposed=false,frame=0,previous=performance.now(),spacing=1.12,lastReset=0;
  let drag:null|{id:number;x:number;y:number;lastX:number;lastY:number;start:number;tile:boolean;cancel:boolean}=null;
- let vx=0,vy=0,join=0;
+ let vx=0,join=0;
  const v=(a:Vec)=>new T.Vector3(...a);
  const axisVector=(axis:Axis)=>new T.Vector3(axis===0?1:0,axis===1?1:0,axis===2?1:0);
  let controls:Controls|null=null;
@@ -70,7 +72,7 @@ export function Scene(){
  ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(meshes)[0];
  let s=null;if(hit){const fi=meshes.indexOf(hit.object as T.Mesh);s=lists[fi][Math.floor((hit.faceIndex??0)/2)];}
  controls=s?captureControls(useGame.getState().pieces[s.pieceId],s,root.quaternion):null;
- useGame.getState().select(s);vx=vy=0;canvas.setPointerCapture(e.pointerId);
+ useGame.getState().select(s);vx=0;canvas.setPointerCapture(e.pointerId);
  drag={id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,start:performance.now(),tile:!!s,cancel:false};
  };
  const move=(e:PointerEvent)=>{
@@ -82,12 +84,12 @@ export function Scene(){
  if(performance.now()-drag.start<200){drag.cancel=true;useGame.setState({notice:'マスを少し長押ししてから、縦か横にスワイプしてください。'});return;}
  act(Math.abs(dx)>Math.abs(dy)?dx>0?'d':'a':dy>0?'s':'w');drag.cancel=true;
  }else{
- vx=(e.clientX-drag.lastX)*.005;vy=(e.clientY-drag.lastY)*.005;
- root.quaternion.premultiply(new T.Quaternion().setFromEuler(new T.Euler(vy,vx,0)));
+ vx=(e.clientX-drag.lastX)*.005;
+ yaw=wrapYaw(yaw+vx);root.quaternion.copy(faceView(useGame.getState().viewFace,yaw));
  drag.lastX=e.clientX;drag.lastY=e.clientY;
  }};
  const up=(e:PointerEvent)=>{if(drag?.id===e.pointerId)drag=null;};
- const cancel=()=>{drag=null;vx=vy=0;};
+ const cancel=()=>{drag=null;vx=0;};
  canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);
  canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',cancel);canvas.addEventListener('lostpointercapture',up);
  window.addEventListener('blur',cancel);document.addEventListener('visibilitychange',cancel);
@@ -98,7 +100,8 @@ export function Scene(){
  frame=requestAnimationFrame(tick);const dt=Math.min((now-previous)/1000,.04);previous=now;
  const state=useGame.getState();
  if(state.resetView!==lastReset){lastReset=state.resetView;initial();cancel();controls=null;state.select(null);}
- if(!drag&&!state.selection&&!state.reduced&&state.phase!=='won'){root.quaternion.premultiply(new T.Quaternion().setFromEuler(new T.Euler(vy*dt*60,vx*dt*60,0)));vx*=Math.exp(-6*dt);vy*=Math.exp(-6*dt);}
+ if(!drag&&!state.selection&&!state.reduced&&!state.active&&state.phase!=='won'){yaw=wrapYaw(yaw+vx*dt*60);vx*=Math.exp(-6*dt);}
+ if(state.phase!=='won')root.quaternion.copy(faceView(state.viewFace,yaw));
  const victory=state.victory;
  join= victory?Math.min(1,join+dt*(state.reduced?12:2.5)):0;
  if(victory){cancel();matrix.makeBasis(v(victory.right),v(victory.up),v(victory.normal));const target=new T.Quaternion().setFromRotationMatrix(matrix).invert();root.quaternion.slerp(target,Math.min(1,dt*(state.reduced?30:5)));}
