@@ -24,7 +24,7 @@ function App(){
  <header><a className="brand" href="https://earthkey.me/" target="_blank" rel="noreferrer">EARTHKEY / PLAY</a><span className="badge">CRYPTONINJA / CUBE</span></header>
  <section className="intro"><span className="eyebrow">ひと回しで、絵がつながる。</span><h1>CryptoNinja <em>Cube</em></h1><p>浮かぶピースを回して、6つの絵をひとつに。</p></section>
  {!playing?<Entry onStart={()=>{setPlaying(true);window.scrollTo(0,0);}}/>:<>
- <div className="game-menu"><span>甲賀 / 易 · {s.lastMix}手でスタート</span><button onClick={()=>{setPlaying(false);window.scrollTo(0,0);}}>← 条件を選び直す</button></div>
+ <div className="game-menu"><span>甲賀 / {s.difficulty==='medium'?'中・アニメ':'易・静止画'} · {s.lastMix}手でスタート</span><button onClick={()=>{setPlaying(false);window.scrollTo(0,0);}}>← 条件を選び直す</button></div>
  <section className="play-area">
  <div className="theme-row"><span>画面の明るさ</span><div className="theme-choice"><span className={!dark?'theme-current':''}>クリーム</span><button className="theme-toggle" type="button" role="switch" aria-label="ダーク表示" aria-checked={dark} onClick={()=>setDark(!dark)}><span className="theme-thumb"/></button><span className={dark?'theme-current':''}>ダーク</span></div></div>
  <div className={'stage size-'+s.displaySize+(s.reduced?' motion-off':'')}><div className="stage-label">{faces[s.viewFace].name} <span>{faceRoman[s.viewFace]??'PLACEHOLDER'}</span></div>

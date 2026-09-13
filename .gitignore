@@ -14,3 +14,19 @@ public/assets/
 *.webp
 *.gif
 *.mp4
+
+# The six adopted Koga face images and medium-difficulty animations are runtime
+# assets. Keep generated media ignored, but ship this exact playable set.
+!public/assets/
+!public/assets/sakuya.png
+!public/assets/xiaolan.webp
+!public/assets/nemu.webp
+!public/assets/izuna.webp
+!public/assets/uka.webp
+!public/assets/oto.webp
+!public/assets/sakuya-medium.mp4
+!public/assets/xiaolan-medium.mp4
+!public/assets/nemu-medium.mp4
+!public/assets/izuna-medium.mp4
+!public/assets/uka-medium.mp4
+!public/assets/oto-medium.mp4

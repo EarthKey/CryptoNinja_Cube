@@ -4,6 +4,7 @@ import {prepareRound,firstVictory,type Victory} from './round';
 export type Active={move:Move;started:number;undo:boolean};
 type State={
  start:(n:number)=>boolean;
+ difficulty:'easy'|'medium';setDifficulty:(difficulty:'easy'|'medium')=>void;
  viewFace:number;setViewFace:(face:number)=>void;
  mode:'one'|'six';phase:'ready'|'mixing'|'playing'|'won';victory:Victory|null;playMoves:number;lastMix:number;
  displaySize:'small'|'medium'|'large';pieces:Piece[];active:Active|null;pending:Move[];history:Move[];selection:Sticker|null;
@@ -12,6 +13,7 @@ type State={
 };
 export const useGame=create<State>((set,get)=>({
  start:n=>{try{const moves=prepareRound(n);set(s=>({pieces:moves.reduce(turn,fresh()),phase:'playing',victory:null,playMoves:0,lastMix:n,active:null,pending:[],history:[],selection:null,preview:null,moved:true,viewFace:0,resetView:s.resetView+1,notice:s.mode==='one'?'どの面でも、位置と向きを揃えればクリアです。':'6面の位置と向きを揃えましょう。'}));return true;}catch(error){set({notice:(error as Error).message});return false;}},
+ difficulty:'easy',setDifficulty:difficulty=>set({difficulty}),
  viewFace:0,setViewFace:face=>{const s=get();if(s.active||s.phase==='won'||!Number.isInteger(face)||face<0||face>5)return;set({viewFace:face,selection:null,preview:null,resetView:s.resetView+1});},
  mode:'one',phase:'ready',victory:null,playMoves:0,lastMix:3,displaySize:'medium',
  pieces:fresh(),active:null,pending:[],history:[],selection:null,moved:false,gap:.12,

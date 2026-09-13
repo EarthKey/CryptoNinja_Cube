@@ -6,16 +6,16 @@ import {faceView,DEFAULT_YAW,VIEW_TILT,wrapYaw} from './view';
 import {celebrationAt} from './celebration';
 import {stickers,faces,transform,solvedFaces,type Move,type Axis,type Vec} from './model';
 
-const faceImages:Partial<Record<number,{src:string;flipX?:boolean}>>={
- 0:{src:'/assets/sakuya.png',flipX:true},
- 1:{src:'/assets/xiaolan.webp'},
- 2:{src:'/assets/nemu.webp'},
- 3:{src:'/assets/izuna.webp'},
- 4:{src:'/assets/uka.webp'},
- 5:{src:'/assets/oto.webp'},
+const faceMedia:Partial<Record<number,{image:string;video:string;flipX?:boolean}>>={
+ 0:{image:'/assets/sakuya.png',video:'/assets/sakuya-medium.mp4',flipX:true},
+ 1:{image:'/assets/xiaolan.webp',video:'/assets/xiaolan-medium.mp4'},
+ 2:{image:'/assets/nemu.webp',video:'/assets/nemu-medium.mp4'},
+ 3:{image:'/assets/izuna.webp',video:'/assets/izuna-medium.mp4'},
+ 4:{image:'/assets/uka.webp',video:'/assets/uka-medium.mp4'},
+ 5:{image:'/assets/oto.webp',video:'/assets/oto-medium.mp4'},
 };
 
-export function Scene(){
+export function Scene({preview=false}:{preview?:boolean}){
  const host=useRef<HTMLDivElement>(null);
  useEffect(()=>{
  const el=host.current!; let renderer:T.WebGLRenderer;
@@ -52,7 +52,8 @@ export function Scene(){
  const touchCornerMat=new T.PointsMaterial({map:touchCornerTexture,color:'#16845b',size:.48,transparent:true,opacity:.48,depthWrite:false,blending:T.AdditiveBlending});
  const touchCornerCoreMat=new T.PointsMaterial({color:'#16845b',size:.11,transparent:true,opacity:.7,depthWrite:false});
  const touchCorners=new T.Points(touchCornerGeo,touchCornerMat),touchCornerCores=new T.Points(touchCornerGeo,touchCornerCoreMat);root.add(touchCorners,touchCornerCores);
- const textures:T.Texture[]=[];
+ const animateFaces=!preview&&useGame.getState().difficulty==='medium';
+ const textures:T.Texture[]=[];const videos:HTMLVideoElement[]=[];
  const materials:T.MeshBasicMaterial[]=[];const meshes:T.Mesh[]=[];
  const lists=faces.map((_,i)=>stickers.filter(s=>s.face===i));
  faces.forEach((f,i)=>{
@@ -63,11 +64,16 @@ export function Scene(){
  for(let y=0;y<3;y++)for(let x=0;x<3;x++){ctx.fillText('↑',x*171+85,y*171+38);ctx.fillText(String(y*3+x+1),x*171+85,y*171+150);}
  const fallback=new T.CanvasTexture(c);fallback.colorSpace=T.SRGBColorSpace;textures.push(fallback);
  const mat=new T.MeshBasicMaterial({map:fallback});materials.push(mat);
- const image=faceImages[i];
- if(image)new T.TextureLoader().load(image.src,tex=>{if(disposed){tex.dispose();return;}tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());textures.push(tex);mat.map=tex;mat.needsUpdate=true;},undefined,()=>useGame.setState({notice:`${f.name}の画像を読み込めません。${image.src} を確認してください。`}));
+ const media=faceMedia[i];let videoReady=false;
+ if(media)new T.TextureLoader().load(media.image,tex=>{if(disposed){tex.dispose();return;}tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());textures.push(tex);if(!videoReady){mat.map=tex;mat.needsUpdate=true;}},undefined,()=>useGame.setState({notice:`${f.name}の画像を読み込めません。${media.image} を確認してください。`}));
+ if(media&&animateFaces){
+  const video=document.createElement('video');videos.push(video);video.className='face-video-source';video.hidden=true;video.setAttribute('aria-hidden','true');video.src=media.video;video.muted=true;video.loop=true;video.playsInline=true;video.preload='auto';video.disablePictureInPicture=true;el.appendChild(video);
+  video.onloadeddata=()=>{if(disposed)return;videoReady=true;const tex=new T.VideoTexture(video);tex.colorSpace=T.SRGBColorSpace;tex.minFilter=T.LinearFilter;tex.magFilter=T.LinearFilter;textures.push(tex);mat.map=tex;mat.needsUpdate=true;if(!useGame.getState().reduced)void video.play().catch(()=>{});};
+  video.onerror=()=>useGame.setState({notice:`${f.name}のアニメを読み込めません。静止画で表示します。${media.video} を確認してください。`});video.load();
+ }
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(new Float32Array(9*12),3));
  const uv:number[]=[],ix:number[]=[];
- lists[i].forEach((s,j)=>{for(const [x,y] of [[0,0],[1,0],[1,1],[0,1]]){const u=(s.col+x)/3;uv.push(image?.flipX?1-u:u,(s.row+y)/3);}const n=j*4;ix.push(n,n+1,n+2,n,n+2,n+3);});
+ lists[i].forEach((s,j)=>{for(const [x,y] of [[0,0],[1,0],[1,1],[0,1]]){const u=(s.col+x)/3;uv.push(media?.flipX?1-u:u,(s.row+y)/3);}const n=j*4;ix.push(n,n+1,n+2,n,n+2,n+3);});
  geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.setIndex(ix);
  // Tiles migrate to other faces; a fixed whole-cube bound prevents stale raycast bounds.
  geo.boundingSphere=new T.Sphere(new T.Vector3(),4);
@@ -135,10 +141,12 @@ export function Scene(){
  window.addEventListener('blur',cancel);document.addEventListener('visibilitychange',cancel);
  const resize=()=>{const w=el.clientWidth,h=el.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.position.z=camera.aspect<.8?10.8:9;camera.updateProjectionMatrix();};
  const observer=new ResizeObserver(resize);observer.observe(el);resize();
- let sample=0,frames=0,sampleStart=performance.now();
+ let sample=0,frames=0,sampleStart=performance.now(),lastVideoEnabled:boolean|null=null;
  const tick=(now:number)=>{
  frame=requestAnimationFrame(tick);const dt=Math.min((now-previous)/1000,.04);previous=now;
  const state=useGame.getState();
+ const videoEnabled=!state.reduced&&document.visibilityState==='visible';
+ if(videoEnabled!==lastVideoEnabled){lastVideoEnabled=videoEnabled;videos.forEach(video=>{if(videoEnabled&&video.readyState>=2)void video.play().catch(()=>{});else video.pause();});}
  if(state.resetView!==lastReset){lastReset=state.resetView;initial();cancel();controls=null;state.select(null);}
  if(!drag&&!state.selection&&!state.reduced&&!state.active&&state.phase!=='won'){yaw=wrapYaw(yaw+vx*dt*60);pitch=wrapYaw(pitch+vy*dt*60);vx*=Math.exp(-6*dt);vy*=Math.exp(-6*dt);}
  if(state.phase!=='won')root.quaternion.copy(faceView(state.viewFace,yaw,pitch));
@@ -202,9 +210,9 @@ export function Scene(){
  };
  frame=requestAnimationFrame(tick);
  // Read-only diagnostics: tests still operate through pointer and keyboard events.
- (window as any).__cube={snapshot:()=>{const s=useGame.getState();return {pieces:s.pieces,solved:solvedFaces(s.pieces),busy:!!s.active,history:s.history.length,selection:s.selection,spacing,fps:sample,celebration:s.victory?celebration:null};},
+ (window as any).__cube={snapshot:()=>{const s=useGame.getState();return {pieces:s.pieces,solved:solvedFaces(s.pieces),busy:!!s.active,history:s.history.length,selection:s.selection,spacing,fps:sample,celebration:s.victory?celebration:null,media:videos.map(video=>({file:video.src.split('/').at(-1),readyState:video.readyState,currentTime:video.currentTime,paused:video.paused,error:video.error?.code??null}))};},
  tilePoint:(face:number,index:number)=>{const s=lists[face][index],p=useGame.getState().pieces[s.pieceId];const pt=v(p.pos).multiplyScalar(spacing).add(v(transform(p.basis,s.normal)).multiplyScalar(.51));root.localToWorld(pt);pt.project(camera);const r=canvas.getBoundingClientRect();return {x:r.left+(pt.x+1)*r.width/2,y:r.top+(1-pt.y)*r.height/2};}};
- return()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();window.removeEventListener('keydown',keyboard);window.removeEventListener('cube-direction',command);window.removeEventListener('blur',cancel);document.removeEventListener('visibilitychange',cancel);renderer.dispose();starGeo.dispose();starMat.dispose();starTexture.dispose();touchCornerGeo.dispose();touchCornerMat.dispose();touchCornerCoreMat.dispose();touchCornerTexture.dispose();bodyGeo.dispose();bodyMat.dispose();outlineGeo.dispose();outlineMat.dispose();meshes.forEach(m=>m.geometry.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());canvas.remove();delete (window as any).__cube;};
- },[]);
+ return()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();window.removeEventListener('keydown',keyboard);window.removeEventListener('cube-direction',command);window.removeEventListener('blur',cancel);document.removeEventListener('visibilitychange',cancel);videos.forEach(video=>{video.pause();video.onloadeddata=null;video.onerror=null;video.removeAttribute('src');video.load();video.remove();});renderer.dispose();starGeo.dispose();starMat.dispose();starTexture.dispose();touchCornerGeo.dispose();touchCornerMat.dispose();touchCornerCoreMat.dispose();touchCornerTexture.dispose();bodyGeo.dispose();bodyMat.dispose();outlineGeo.dispose();outlineMat.dispose();meshes.forEach(m=>m.geometry.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());canvas.remove();delete (window as any).__cube;};
+ },[preview]);
  return <div className="scene" ref={host} aria-label="3Dキューブ。マスを選びWASD、または長押しスワイプで回転" />;
 }
