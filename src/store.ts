@@ -1,8 +1,9 @@
 import {create} from 'zustand';
-import {fresh,turn,inverse,scramble,solvedFaces,faces,type Move,type Piece,type Sticker} from './model';
+import {fresh,turn,inverse,solvedFaces,faces,type Move,type Piece,type Sticker} from './model';
 import {prepareRound,firstVictory,type Victory} from './round';
 export type Active={move:Move;started:number;undo:boolean};
 type State={
+ start:(n:number)=>boolean;
  viewFace:number;setViewFace:(face:number)=>void;
  mode:'one'|'six';phase:'ready'|'mixing'|'playing'|'won';victory:Victory|null;playMoves:number;lastMix:number;
  displaySize:'small'|'medium'|'large';pieces:Piece[];active:Active|null;pending:Move[];history:Move[];selection:Sticker|null;
@@ -10,6 +11,7 @@ type State={
  move:(m:Move)=>void;finish:()=>void;undo:()=>void;reset:()=>void;mix:(n:number)=>void;select:(s:Sticker|null)=>void;setMode:(mode:'one'|'six')=>void;
 };
 export const useGame=create<State>((set,get)=>({
+ start:n=>{try{const moves=prepareRound(n);set(s=>({pieces:moves.reduce(turn,fresh()),phase:'playing',victory:null,playMoves:0,lastMix:n,active:null,pending:[],history:[],selection:null,preview:null,moved:true,viewFace:0,resetView:s.resetView+1,notice:s.mode==='one'?'どの面でも、位置と向きを揃えればクリアです。':'6面の位置と向きを揃えましょう。'}));return true;}catch(error){set({notice:(error as Error).message});return false;}},
  viewFace:0,setViewFace:face=>{const s=get();if(s.active||s.phase==='won'||!Number.isInteger(face)||face<0||face>5)return;set({viewFace:face,selection:null,preview:null,resetView:s.resetView+1});},
  mode:'one',phase:'ready',victory:null,playMoves:0,lastMix:3,displaySize:'medium',
  pieces:fresh(),active:null,pending:[],history:[],selection:null,moved:false,gap:.12,
@@ -29,7 +31,7 @@ export const useGame=create<State>((set,get)=>({
  reset:()=>set(s=>({pieces:fresh(),phase:'ready',victory:null,playMoves:0,active:null,pending:[],history:[],selection:null,moved:false,preview:null,resetView:s.resetView+1,notice:s.mode==='one'?'まず「3手だけ混ぜる」で始めましょう。':'最初の並びに戻しました。'})),
  setMode:mode=>{set({mode});get().reset();},
  mix:n=>{const s=get();if(s.active)return;let moves:Move[];
- try{moves=s.mode==='one'?prepareRound(n):scramble(n);}catch(error){set({notice:(error as Error).message});return;}
+ try{moves=prepareRound(n,Math.random,s.mode==='one'?fresh():s.pieces);}catch(error){set({notice:(error as Error).message});return;}
  const [first,...pending]=moves;
  set({...(s.mode==='one'?{pieces:fresh(),history:[],moved:false}:{}),phase:'mixing',victory:null,playMoves:0,lastMix:n,active:{move:first,started:performance.now(),undo:false},pending,selection:null,preview:null,notice:'キューブを混ぜています…'});
  },

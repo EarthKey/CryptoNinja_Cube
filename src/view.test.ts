@@ -1,6 +1,14 @@
 import {it,expect} from 'vitest';
 import {Vector3} from 'three';
-import {horizontalView,wrapYaw,VIEW_TILT,VIEW_ROLL,DEFAULT_YAW} from './view';
+import {horizontalView,faceView,wrapYaw,VIEW_TILT,VIEW_ROLL,DEFAULT_YAW} from './view';
+it('allows full vertical and horizontal revolutions for every face without drift',()=>{
+ for(let face=0;face<6;face++)for(const pitch of [-3,-1,0,1,3]){
+  const q=faceView(face,.8,pitch);
+  expect(Math.abs(q.dot(faceView(face,.8,pitch+Math.PI*2)))).toBeCloseTo(1,12);
+  expect(Math.abs(q.dot(faceView(face,.8+Math.PI*2,pitch)))).toBeCloseTo(1,12);
+  expect(q.length()).toBeCloseTo(1,12);
+ }
+});
 it('keeps the cube vertical axis at a constant tilt through full rotations',()=>{
  const up=new Vector3(0,1,0).applyQuaternion(horizontalView(DEFAULT_YAW));
  for(let i=-100;i<=100;i++){

@@ -7,11 +7,11 @@ export type Face = { name: string; normal: Vec; up: Vec; color: string };
 export const identity = (): Basis => [[1,0,0],[0,1,0],[0,0,1]];
 export const faces: Face[] = [
  {name:'咲耶',normal:[0,0,1],up:[0,1,0],color:'#dfa3ad'},
- {name:'若葉',normal:[1,0,0],up:[0,1,0],color:'#9fab91'},
- {name:'月',normal:[0,1,0],up:[0,0,-1],color:'#e3c17e'},
- {name:'空',normal:[-1,0,0],up:[0,1,0],color:'#94b6c6'},
- {name:'藤',normal:[0,0,-1],up:[0,1,0],color:'#b2a5c3'},
- {name:'珊瑚',normal:[0,-1,0],up:[0,0,1],color:'#cf937d'},
+ {name:'シャオラン',normal:[1,0,0],up:[0,1,0],color:'#9fab91'},
+ {name:'ネム',normal:[0,1,0],up:[0,0,-1],color:'#e3c17e'},
+ {name:'イズナ',normal:[-1,0,0],up:[0,1,0],color:'#94b6c6'},
+ {name:'ウカ',normal:[0,0,-1],up:[0,1,0],color:'#b2a5c3'},
+ {name:'オト',normal:[0,-1,0],up:[0,0,1],color:'#cf937d'},
 ];
 export const dot=(a:Vec,b:Vec)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 export const cross=(a:Vec,b:Vec):Vec=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];

@@ -1,7 +1,7 @@
 import {fresh,turn,scramble,solvedFaces,stickers,faces,eq,transform,type Piece,type Move,type Vec} from './model';
-export function prepareRound(count:number,random=Math.random):Move[]{
- if(count!==3&&count!==12)throw new Error('シャッフルは3手か12手です');
- const valid=(moves:Move[])=>solvedFaces(moves.reduce(turn,fresh())).length===0;
+export function prepareRound(count:number,random=Math.random,initial:Piece[]=fresh()):Move[]{
+ if(!Number.isInteger(count)||count<3||count>30)throw new Error('混ぜる手数は3〜30の整数で指定してください。');
+ const valid=(moves:Move[])=>solvedFaces(moves.reduce(turn,initial)).length===0;
  for(let i=0;i<128;i++){const moves=scramble(count,random);if(valid(moves))return moves;}
  // Deterministic bounded fallback also handles a degenerate random source.
  const options:Move[]=[];for(const axis of [0,1,2] as const)for(const layer of [-1,1])for(const dir of [-1,1] as const)options.push({axis,layer,dir});
