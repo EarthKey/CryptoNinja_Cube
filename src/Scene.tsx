@@ -22,6 +22,7 @@ export function Scene({preview=false}:{preview?:boolean}){
  try{renderer=new T.WebGLRenderer({antialias:true,alpha:true});}catch{el.textContent='WebGLを利用できません。ChromeまたはEdgeでお試しください。';return;}
  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.outputColorSpace=T.SRGBColorSpace;
  el.appendChild(renderer.domElement);const canvas=renderer.domElement;
+ const surface:HTMLElement=preview?canvas:document.createElement('div');if(!preview){surface.className='rotation-surface';el.parentElement!.appendChild(surface);}
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(37,1,.1,100); camera.position.z=9;
  const root=new T.Group();scene.add(root);
  const starCanvas=document.createElement('canvas');starCanvas.width=starCanvas.height=64;
@@ -116,18 +117,19 @@ export function Scene({preview=false}:{preview?:boolean}){
  let s=hitSticker(e.clientX,e.clientY);
  if(!s&&e.pointerType==='touch')for(const [dx,dy] of [[18,0],[-18,0],[0,18],[0,-18],[13,13],[-13,13],[13,-13],[-13,-13]]){s=hitSticker(e.clientX+dx,e.clientY+dy);if(s)break;}
  controls=s?captureControls(useGame.getState().pieces[s.pieceId],s,root.quaternion):null;
- useGame.getState().select(s);vx=0;vy=0;canvas.setPointerCapture(e.pointerId);
+ useGame.getState().select(s);vx=0;vy=0;surface.setPointerCapture(e.pointerId);
  drag={id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,start:performance.now(),tile:!!s,cancel:false};
  };
  const move=(e:PointerEvent)=>{
  if(!drag||drag.id!==e.pointerId||drag.cancel)return;
  const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
  if(drag.tile){
- if(e.pointerType==='mouse')return;
+ 
  if(Math.hypot(dx,dy)<24)return;
- if(performance.now()-drag.start<200){drag.cancel=true;useGame.setState({notice:'マスを少し長押ししてから、縦か横にスワイプしてください。'});return;}
- act(Math.abs(dx)>Math.abs(dy)?dx>0?'d':'a':dy>0?'s':'w');drag.cancel=true;
- }else{
+ if(e.pointerType==='mouse'||performance.now()-drag.start<200){drag.tile=false;controls=null;useGame.getState().select(null);}else{
+ act(Math.abs(dx)>Math.abs(dy)?dx>0?'d':'a':dy>0?'s':'w');drag.cancel=true;return;}
+ }
+ if(!drag.tile){
  vx=(e.clientX-drag.lastX)*.005;
  vy=(e.clientY-drag.lastY)*.005;
  pitch=wrapYaw(pitch+vy);
@@ -136,8 +138,8 @@ export function Scene({preview=false}:{preview?:boolean}){
  }};
  const up=(e:PointerEvent)=>{if(drag?.id===e.pointerId)drag=null;};
  const cancel=()=>{drag=null;vx=0;vy=0;};
- canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);
- canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',cancel);canvas.addEventListener('lostpointercapture',up);
+ surface.addEventListener('pointerdown',down);surface.addEventListener('pointermove',move);
+ surface.addEventListener('pointerup',up);surface.addEventListener('pointercancel',cancel);surface.addEventListener('lostpointercapture',up);
  window.addEventListener('blur',cancel);document.addEventListener('visibilitychange',cancel);
  const resize=()=>{const w=el.clientWidth,h=el.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.position.z=camera.aspect<.8?10.8:9;camera.updateProjectionMatrix();};
  const observer=new ResizeObserver(resize);observer.observe(el);resize();
@@ -212,7 +214,7 @@ export function Scene({preview=false}:{preview?:boolean}){
  // Read-only diagnostics: tests still operate through pointer and keyboard events.
  (window as any).__cube={snapshot:()=>{const s=useGame.getState();return {pieces:s.pieces,solved:solvedFaces(s.pieces),busy:!!s.active,history:s.history.length,selection:s.selection,spacing,fps:sample,celebration:s.victory?celebration:null,media:videos.map(video=>({file:video.src.split('/').at(-1),readyState:video.readyState,currentTime:video.currentTime,paused:video.paused,error:video.error?.code??null}))};},
  tilePoint:(face:number,index:number)=>{const s=lists[face][index],p=useGame.getState().pieces[s.pieceId];const pt=v(p.pos).multiplyScalar(spacing).add(v(transform(p.basis,s.normal)).multiplyScalar(.51));root.localToWorld(pt);pt.project(camera);const r=canvas.getBoundingClientRect();return {x:r.left+(pt.x+1)*r.width/2,y:r.top+(1-pt.y)*r.height/2};}};
- return()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();window.removeEventListener('keydown',keyboard);window.removeEventListener('cube-direction',command);window.removeEventListener('blur',cancel);document.removeEventListener('visibilitychange',cancel);videos.forEach(video=>{video.pause();video.onloadeddata=null;video.onerror=null;video.removeAttribute('src');video.load();video.remove();});renderer.dispose();starGeo.dispose();starMat.dispose();starTexture.dispose();touchCornerGeo.dispose();touchCornerMat.dispose();touchCornerCoreMat.dispose();touchCornerTexture.dispose();bodyGeo.dispose();bodyMat.dispose();outlineGeo.dispose();outlineMat.dispose();meshes.forEach(m=>m.geometry.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());canvas.remove();delete (window as any).__cube;};
+ return()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();window.removeEventListener('keydown',keyboard);window.removeEventListener('cube-direction',command);window.removeEventListener('blur',cancel);document.removeEventListener('visibilitychange',cancel);videos.forEach(video=>{video.pause();video.onloadeddata=null;video.onerror=null;video.removeAttribute('src');video.load();video.remove();});renderer.dispose();starGeo.dispose();starMat.dispose();starTexture.dispose();touchCornerGeo.dispose();touchCornerMat.dispose();touchCornerCoreMat.dispose();touchCornerTexture.dispose();bodyGeo.dispose();bodyMat.dispose();outlineGeo.dispose();outlineMat.dispose();meshes.forEach(m=>m.geometry.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());if(!preview)surface.remove();canvas.remove();delete (window as any).__cube;};
  },[preview]);
  return <div className="scene" ref={host} aria-label="3Dキューブ。マスを選びWASD、または長押しスワイプで回転" />;
 }
