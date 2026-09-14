@@ -202,9 +202,9 @@ export function Scene({preview=false}:{preview?:boolean}){
  for(let i=0;i<positions.length;i++)for(const x of [-.55,.55])for(const y of [-.55,.55])for(const z of [-.55,.55]){
  const point=new T.Vector3(x,y,z).applyQuaternion(orientations[i]).add(positions[i]);root.localToWorld(point);point.project(camera);extent=Math.max(extent,Math.abs(point.x),Math.abs(point.y));
  }
- const requested={small:1.1,medium:1.52,large:1.8}[state.displaySize];
- const occupancy={small:.78,medium:.94,large:.99}[state.displaySize];
- camera.zoom=Math.min(requested,occupancy/Math.max(extent,.001));camera.updateProjectionMatrix();
+ // Fit size choices inside the canvas, which excludes the A/D button lanes.
+ const occupancy={small:.70,medium:.84,large:.98}[state.displaySize];
+ camera.zoom=occupancy/Math.max(extent,.001);camera.updateProjectionMatrix();
  renderer.render(scene,camera);
  frames++;if(now-sampleStart>1000){sample=Math.round(frames*1000/(now-sampleStart));frames=0;sampleStart=now;
  const info=document.getElementById('render-info');if(info)info.textContent=sample+' fps · '+renderer.info.render.calls+' draw calls';}
