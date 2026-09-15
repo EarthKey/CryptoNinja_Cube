@@ -8,5 +8,5 @@
 .dpad .w,.dpad .s{color:#b91e40;border-color:#ed8396;background:#fff0f2}.dpad .a,.dpad .d{color:#087148;border-color:#63cda3;background:#ecfff5}.dpad small{color:inherit}
 @keyframes cue-breathe{50%{box-shadow:0 0 0 5px #fff7,0 0 27px color-mix(in srgb,var(--light) 48%,transparent)}}
 .motion-off .turn-cue{animation:none}
-@media(max-width:440px){.turn-cue{width:46px;min-height:48px;border-radius:14px}.cue-w,.cue-s{left:calc(50% - 23px)}.cue-w{top:42px}.cue-s{bottom:51px}.cue-a{left:10px}.cue-d{right:10px}.cue-arrow{font-size:25px;line-height:25px}.cue-key span{display:none}}
+@media(max-width:440px){.cue-w,.cue-s{left:calc(50% - 30px)}.cue-w{top:42px}.cue-s{bottom:51px}.cue-a{left:10px}.cue-d{right:10px}.cue-key span{display:none}}
 @media(prefers-reduced-motion:reduce){.turn-cue{animation:none}}
