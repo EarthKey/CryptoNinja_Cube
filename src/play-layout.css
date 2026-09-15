@@ -12,7 +12,7 @@ aside{padding:18px 0}.chapter{font-size:11px;color:var(--sakura)}.notice{font-si
 .stage-undo button{min-height:44px;font-size:12px;padding:8px 12px}
 .stage-bottom{flex-direction:column;text-align:center;gap:4px;line-height:1.5}
 .swipe-hint{font-size:11px}
-.stage .cue-w{top:112px}.stage .cue-s{bottom:100px}.stage .guide-caption{bottom:78px}
+.stage .cue-w{top:92px}.stage .cue-s{bottom:100px}.stage .guide-caption{bottom:78px}
 
 /* Reserve the rightmost fifth for page scrolling on touch devices. */
 @media (pointer:coarse){.rotation-surface{right:20%}.stage .scene canvas{pointer-events:none;touch-action:pan-y}}
