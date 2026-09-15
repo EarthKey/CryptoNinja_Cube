@@ -17,3 +17,7 @@ aside{padding:18px 0}.chapter{font-size:11px;color:var(--sakura)}.notice{font-si
 /* Reserve the rightmost fifth for page scrolling on touch devices. */
 @media (pointer:coarse){.rotation-surface{right:20%}.stage .scene canvas{pointer-events:none;touch-action:pan-y}}
 
+
+/* Add 20% vertical room on phones without enlarging the cube canvas. */
+@media(max-width:760px){.stage .scene{inset:174px 92px 192px}.stage .cue-w{top:104px}.stage .cue-s{bottom:92px}}
+@media(max-width:440px){.stage .scene{inset:162px 70px 180px}}
