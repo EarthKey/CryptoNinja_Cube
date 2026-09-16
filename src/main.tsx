@@ -2,6 +2,7 @@ import React,{useState,useEffect} from 'react';
 import {createRoot} from 'react-dom/client';
 import {Scene} from './Scene';
 import {Entry} from './Entry';
+import {Bgm} from './Bgm';
 import {useGame} from './store';
 import {solvedFaces,faces} from './model';
 import './style.css';
@@ -25,7 +26,7 @@ function App(){
  {!playing?<Entry onStart={()=>{setPlaying(true);window.scrollTo(0,0);}}/>:<>
  <div className="game-menu"><span>甲賀 / {s.difficulty==='medium'?'中・アニメ':'易・静止画'} · {s.lastMix}手でスタート</span><button onClick={()=>{setPlaying(false);window.scrollTo(0,0);}}>← 条件を選び直す</button></div>
  <section className="play-area">
- <div className="theme-row"><span>画面の明るさ</span><div className="theme-choice"><span className={!dark?'theme-current':''}>クリーム</span><button className="theme-toggle" type="button" role="switch" aria-label="ダーク表示" aria-checked={dark} onClick={()=>setDark(!dark)}><span className="theme-thumb"/></button><span className={dark?'theme-current':''}>ダーク</span></div></div>
+ <div className="theme-row"><Bgm/><div className="theme-choice"><span>画面</span><span className={!dark?'theme-current':''}>クリーム</span><button className="theme-toggle" type="button" role="switch" aria-label="ダーク表示" aria-checked={dark} onClick={()=>setDark(!dark)}><span className="theme-thumb"/></button><span className={dark?'theme-current':''}>ダーク</span></div></div>
  <div className={'stage size-'+s.displaySize+(s.reduced?' motion-off':'')}><div className="stage-label">甲賀 <span>KOKA</span></div>
  <div className="play-stats" aria-label="進行状況"><span>{s.mode==='one'?'操作':'回転'} <strong>{s.mode==='one'?s.playMoves:s.history.length}</strong></span><span>完成 <strong>{s.mode==='one'&&s.phase!=='playing'&&s.phase!=='won'?'—':complete}<small> / {s.mode==='one'?1:6}面</small></strong></span><div className="stage-undo"><button disabled={!!s.active||!s.history.length||s.phase==='won'} onClick={s.undo}>↶ 1手戻す</button></div></div><Scene/><div className="shadow"/>
  {s.victory&&<div className="victory" role="status"><strong>{faces[s.victory.face].name}の面、完成。</strong><span>{s.playMoves}手でクリア · 位置と向きが揃いました</span><button onClick={()=>s.start(s.lastMix)}>もう一度遊ぶ</button></div>}
