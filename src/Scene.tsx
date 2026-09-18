@@ -6,13 +6,15 @@ import {faceView,DEFAULT_YAW,VIEW_TILT,wrapYaw} from './view';
 import {celebrationAt} from './celebration';
 import {stickers,faces,transform,solvedFaces,type Move,type Axis,type Vec} from './model';
 
-const faceMedia:Partial<Record<number,{image:string;video:string;flipX?:boolean}>>={
- 0:{image:'/assets/sakuya.png',video:'/assets/sakuya-medium.mp4',flipX:true},
- 1:{image:'/assets/xiaolan.webp',video:'/assets/xiaolan-medium.mp4'},
- 2:{image:'/assets/nemu.webp',video:'/assets/nemu-medium.mp4'},
- 3:{image:'/assets/izuna.webp',video:'/assets/izuna-medium.mp4'},
- 4:{image:'/assets/uka.webp',video:'/assets/uka-medium.mp4'},
- 5:{image:'/assets/oto.webp',video:'/assets/oto-medium.mp4'},
+type FaceMedia={image:string;video:string;flipX?:boolean};
+// Hard uses the adopted stage-3 clips as-is, so Sakuya's stage-1 mirror does not apply.
+const faceMedia:Partial<Record<number,FaceMedia&{hard:FaceMedia}>>={
+ 0:{image:'/assets/sakuya.png',video:'/assets/sakuya-medium.mp4',flipX:true,hard:{image:'/assets/sakuya-hard.webp',video:'/assets/sakuya-hard.mp4'}},
+ 1:{image:'/assets/xiaolan.webp',video:'/assets/xiaolan-medium.mp4',hard:{image:'/assets/xiaolan-hard.webp',video:'/assets/xiaolan-hard.mp4'}},
+ 2:{image:'/assets/nemu.webp',video:'/assets/nemu-medium.mp4',hard:{image:'/assets/nemu-hard.webp',video:'/assets/nemu-hard.mp4'}},
+ 3:{image:'/assets/izuna.webp',video:'/assets/izuna-medium.mp4',hard:{image:'/assets/izuna-hard.webp',video:'/assets/izuna-hard.mp4'}},
+ 4:{image:'/assets/uka.webp',video:'/assets/uka-medium.mp4',hard:{image:'/assets/uka-hard.webp',video:'/assets/uka-hard.mp4'}},
+ 5:{image:'/assets/oto.webp',video:'/assets/oto-medium.mp4',hard:{image:'/assets/oto-hard.webp',video:'/assets/oto-hard.mp4'}},
 };
 
 export function Scene({preview=false}:{preview?:boolean}){
@@ -53,7 +55,7 @@ export function Scene({preview=false}:{preview?:boolean}){
  const touchCornerMat=new T.PointsMaterial({map:touchCornerTexture,color:'#16845b',size:.48,transparent:true,opacity:.48,depthWrite:false,blending:T.AdditiveBlending});
  const touchCornerCoreMat=new T.PointsMaterial({color:'#16845b',size:.11,transparent:true,opacity:.7,depthWrite:false});
  const touchCorners=new T.Points(touchCornerGeo,touchCornerMat),touchCornerCores=new T.Points(touchCornerGeo,touchCornerCoreMat);root.add(touchCorners,touchCornerCores);
- const animateFaces=!preview&&useGame.getState().difficulty==='medium';
+ const difficulty=preview?'easy':useGame.getState().difficulty;const animateFaces=difficulty!=='easy';
  const textures:T.Texture[]=[];const videos:HTMLVideoElement[]=[];
  const materials:T.MeshBasicMaterial[]=[];const meshes:T.Mesh[]=[];
  const lists=faces.map((_,i)=>stickers.filter(s=>s.face===i));
@@ -65,7 +67,7 @@ export function Scene({preview=false}:{preview?:boolean}){
  for(let y=0;y<3;y++)for(let x=0;x<3;x++){ctx.fillText('↑',x*171+85,y*171+38);ctx.fillText(String(y*3+x+1),x*171+85,y*171+150);}
  const fallback=new T.CanvasTexture(c);fallback.colorSpace=T.SRGBColorSpace;textures.push(fallback);
  const mat=new T.MeshBasicMaterial({map:fallback});materials.push(mat);
- const media=faceMedia[i];let videoReady=false;
+ const base=faceMedia[i],media=base&&difficulty==='hard'?base.hard:base;let videoReady=false;
  if(media)new T.TextureLoader().load(media.image,tex=>{if(disposed){tex.dispose();return;}tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());textures.push(tex);if(!videoReady){mat.map=tex;mat.needsUpdate=true;}},undefined,()=>useGame.setState({notice:`${f.name}の画像を読み込めません。${media.image} を確認してください。`}));
  if(media&&animateFaces){
   const video=document.createElement('video');videos.push(video);video.className='face-video-source';video.hidden=true;video.setAttribute('aria-hidden','true');video.src=media.video;video.muted=true;video.loop=true;video.playsInline=true;video.preload='auto';video.disablePictureInPicture=true;el.appendChild(video);

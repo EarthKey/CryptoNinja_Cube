@@ -1,10 +1,12 @@
 import {create} from 'zustand';
 import {fresh,turn,inverse,solvedFaces,faces,type Move,type Piece,type Sticker} from './model';
 import {prepareRound,firstVictory,type Victory} from './round';
+export type Difficulty='easy'|'medium'|'hard';
+export const difficultyLabel:Record<Difficulty,string>={easy:'易・静止画',medium:'中・アニメ',hard:'難・全身アニメ'};
 export type Active={move:Move;started:number;undo:boolean};
 type State={
  start:(n:number)=>boolean;
- difficulty:'easy'|'medium';setDifficulty:(difficulty:'easy'|'medium')=>void;
+ difficulty:Difficulty;setDifficulty:(difficulty:Difficulty)=>void;
  viewFace:number;setViewFace:(face:number)=>void;
  mode:'one'|'six';phase:'ready'|'mixing'|'playing'|'won';victory:Victory|null;playMoves:number;lastMix:number;
  displaySize:'small'|'medium'|'large';pieces:Piece[];active:Active|null;pending:Move[];history:Move[];selection:Sticker|null;
