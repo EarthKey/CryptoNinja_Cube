@@ -4,7 +4,7 @@ import {useGame} from './store';
 import {captureControls,type Controls} from './controls';
 import {faceView,DEFAULT_YAW,VIEW_TILT,wrapYaw} from './view';
 import {celebrationAt} from './celebration';
-import {stickers,faces,transform,solvedFaces,type Move,type Axis,type Vec} from './model';
+import {stickersFor,faces,transform,solvedFaces,type Move,type Axis,type Vec} from './model';
 
 type FaceMedia={image:string;video:string;flipX?:boolean};
 // Hard uses the adopted stage-3 clips as-is, so Sakuya's stage-1 mirror does not apply.
@@ -41,9 +41,13 @@ export function Scene({preview=false}:{preview?:boolean}){
  initial();
  scene.add(new T.HemisphereLight(0xffffff,0xb1a19a,2.5));
  const light=new T.DirectionalLight(0xffffff,3);light.position.set(3,5,7);scene.add(light);
- const bodyGeo=new T.BoxGeometry(.985,.985,.985);
+ // The cube stays 3 units across at any size: a 2x2 uses 1.5-unit pieces spaced .75 apart,
+ // so swapping the size never changes how big the puzzle looks on screen.
+ const cubeSize=preview?3:useGame.getState().size,unit=cubeSize===2?1.5:1,step=cubeSize===2?.75:1;
+ const tiles=stickersFor(cubeSize),perFace=tiles.length/6,pieceCount=cubeSize===2?8:26;
+ const bodyGeo=new T.BoxGeometry(.985*unit,.985*unit,.985*unit);
  const bodyMat=new T.MeshStandardMaterial({color:0x514449,roughness:.75});
- const bodies=new T.InstancedMesh(bodyGeo,bodyMat,26);root.add(bodies);
+ const bodies=new T.InstancedMesh(bodyGeo,bodyMat,pieceCount);root.add(bodies);
  // A cube-shaped touch guide follows the actual 3D orientation. Gold is reserved
  // for dark mode; cream mode uses its cool complementary colour for contrast.
  const touchCornerGeo=new T.BufferGeometry(),touchCornerPositions:number[]=[];
@@ -58,13 +62,14 @@ export function Scene({preview=false}:{preview?:boolean}){
  const difficulty=preview?'easy':useGame.getState().difficulty;const animateFaces=difficulty!=='easy';
  const textures:T.Texture[]=[];const videos:HTMLVideoElement[]=[];
  const materials:T.MeshBasicMaterial[]=[];const meshes:T.Mesh[]=[];
- const lists=faces.map((_,i)=>stickers.filter(s=>s.face===i));
+ const lists=faces.map((_,i)=>tiles.filter(s=>s.face===i));
  faces.forEach((f,i)=>{
  const c=document.createElement('canvas');c.width=c.height=512;const ctx=c.getContext('2d')!;
  ctx.fillStyle=f.color;ctx.fillRect(0,0,512,512);
  ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='bold 100px serif';ctx.fillText(f.name,256,285);
  ctx.font='24px sans-serif';
- for(let y=0;y<3;y++)for(let x=0;x<3;x++){ctx.fillText('↑',x*171+85,y*171+38);ctx.fillText(String(y*3+x+1),x*171+85,y*171+150);}
+ const cell=512/cubeSize;
+ for(let y=0;y<cubeSize;y++)for(let x=0;x<cubeSize;x++){ctx.fillText('↑',x*cell+cell/2,y*cell+cell*.22);ctx.fillText(String(y*cubeSize+x+1),x*cell+cell/2,y*cell+cell*.88);}
  const fallback=new T.CanvasTexture(c);fallback.colorSpace=T.SRGBColorSpace;textures.push(fallback);
  const mat=new T.MeshBasicMaterial({map:fallback});materials.push(mat);
  const base=faceMedia[i],media=base&&difficulty==='hard'?base.hard:base;let videoReady=false;
@@ -74,9 +79,9 @@ export function Scene({preview=false}:{preview?:boolean}){
   video.onloadeddata=()=>{if(disposed)return;videoReady=true;const tex=new T.VideoTexture(video);tex.colorSpace=T.SRGBColorSpace;tex.minFilter=T.LinearFilter;tex.magFilter=T.LinearFilter;textures.push(tex);mat.map=tex;mat.needsUpdate=true;if(!useGame.getState().reduced)void video.play().catch(()=>{});};
   video.onerror=()=>useGame.setState({notice:`${f.name}のアニメを読み込めません。静止画で表示します。${media.video} を確認してください。`});video.load();
  }
- const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(new Float32Array(9*12),3));
+ const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(new Float32Array(perFace*12),3));
  const uv:number[]=[],ix:number[]=[];
- lists[i].forEach((s,j)=>{for(const [x,y] of [[0,0],[1,0],[1,1],[0,1]]){const u=(s.col+x)/3;uv.push(media?.flipX?1-u:u,(s.row+y)/3);}const n=j*4;ix.push(n,n+1,n+2,n,n+2,n+3);});
+ lists[i].forEach((s,j)=>{for(const [x,y] of [[0,0],[1,0],[1,1],[0,1]]){const u=(s.col+x)/cubeSize;uv.push(media?.flipX?1-u:u,(s.row+y)/cubeSize);}const n=j*4;ix.push(n,n+1,n+2,n,n+2,n+3);});
  geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.setIndex(ix);
  // Tiles migrate to other faces; a fixed whole-cube bound prevents stale raycast bounds.
  geo.boundingSphere=new T.Sphere(new T.Vector3(),4);
@@ -84,7 +89,7 @@ export function Scene({preview=false}:{preview?:boolean}){
  });
  const outlineGeo=new T.EdgesGeometry(new T.PlaneGeometry(1,1));
  const outlineMat=new T.LineBasicMaterial({color:'#fff4a3'});
- const outline=new T.LineSegments(outlineGeo,outlineMat);root.add(outline);
+ const outline=new T.LineSegments(outlineGeo,outlineMat);outline.scale.setScalar(unit);root.add(outline);
  const border=(outer:number,inner:number)=>{
  const shape=new T.Shape();shape.moveTo(-outer,-outer);shape.lineTo(outer,-outer);shape.lineTo(outer,outer);shape.lineTo(-outer,outer);shape.closePath();
  const hole=new T.Path();hole.moveTo(-inner,-inner);hole.lineTo(-inner,inner);hole.lineTo(inner,inner);hole.lineTo(inner,-inner);hole.closePath();shape.holes.push(hole);return new T.ShapeGeometry(shape);
@@ -169,7 +174,7 @@ export function Scene({preview=false}:{preview?:boolean}){
  root.position.y=state.reduced||drag||victory?0:Math.sin(now*.0007)*.045;
  const frameColor=document.documentElement.dataset.theme==='dark'?'#ffd36b':'#16845b';
  touchCornerMat.color.set(frameColor);touchCornerCoreMat.color.set(frameColor);
- const frameSize=2*spacing+1.16,touching=!!drag?.tile;
+ const frameSize=2*spacing*step+1.16*unit,touching=!!drag?.tile;
  touchCorners.scale.setScalar(frameSize);touchCornerCores.scale.setScalar(frameSize);
  touchCornerMat.size=touching ? .68 : .48+(state.reduced?0:Math.sin(now*.0022)*.036);
  touchCornerMat.opacity+=((touching ? .68 : .48)-touchCornerMat.opacity)*Math.min(1,dt*12);
@@ -178,9 +183,9 @@ export function Scene({preview=false}:{preview?:boolean}){
  const positions:T.Vector3[]=[],orientations:T.Quaternion[]=[];
  const preview=state.preview?direction(state.preview):null;
  state.pieces.forEach((p,i)=>{
- const pos=v(p.pos).multiplyScalar(spacing);matrix.makeBasis(v(p.basis[0]),v(p.basis[1]),v(p.basis[2]));
- if(victory&&victory.pieceIds.includes(p.id))for(const axis of [0,1,2])if(victory.normal[axis]===0)pos.setComponent(axis,p.pos[axis]*(spacing-(spacing-1)*join));
- if(victory)pos.addScaledVector(v(p.pos),celebration.spread);
+ const pos=v(p.pos).multiplyScalar(spacing*step);matrix.makeBasis(v(p.basis[0]),v(p.basis[1]),v(p.basis[2]));
+ if(victory&&victory.pieceIds.includes(p.id))for(const axis of [0,1,2])if(victory.normal[axis]===0)pos.setComponent(axis,p.pos[axis]*step*(spacing-(spacing-1)*join));
+ if(victory)pos.addScaledVector(v(p.pos),celebration.spread*step);
  const q=new T.Quaternion().setFromRotationMatrix(matrix);
  if(animation&&p.pos[animation.move.axis]===animation.move.layer){pos.applyQuaternion(rotation);q.premultiply(rotation);}
  positions.push(pos);orientations.push(q);dummy.position.copy(pos);dummy.quaternion.copy(q);dummy.updateMatrix();bodies.setMatrixAt(i,dummy.matrix);
@@ -192,12 +197,12 @@ export function Scene({preview=false}:{preview?:boolean}){
  list.forEach((s,j)=>{const q=orientations[s.pieceId],pos=positions[s.pieceId];
  [[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]].forEach(([x,y],k)=>{
  const tileSize=victory&&s.face===victory.face?size+(1.001-size)*join:size;
- const point=v(s.normal).multiplyScalar(.5).addScaledVector(v(s.right),x*tileSize).addScaledVector(v(s.up),y*tileSize).applyQuaternion(q).add(pos);
+ const point=v(s.normal).multiplyScalar(.5*unit).addScaledVector(v(s.right),x*tileSize*unit).addScaledVector(v(s.up),y*tileSize*unit).applyQuaternion(q).add(pos);
  attr.setXYZ(j*4+k,point.x,point.y,point.z);});});attr.needsUpdate=true;});
  outline.visible=!!state.selection;
  haloMat.opacity=state.reduced?.24:.22+Math.sin(now*.003)*.08;
  if(state.selection){const s=state.selection,q=orientations[s.pieceId];matrix.makeBasis(v(s.right),v(s.up),v(s.normal));outline.quaternion.setFromRotationMatrix(matrix).premultiply(q);
- outline.position.copy(v(s.normal).multiplyScalar(.506).applyQuaternion(q).add(positions[s.pieceId]));}
+ outline.position.copy(v(s.normal).multiplyScalar(.506*unit).applyQuaternion(q).add(positions[s.pieceId]));}
  // Fit every animated cubie corner inside the dedicated canvas even at large size.
  camera.zoom=1;camera.updateProjectionMatrix();root.updateMatrixWorld(true);camera.updateMatrixWorld(true);
  let extent=0;
@@ -215,7 +220,7 @@ export function Scene({preview=false}:{preview?:boolean}){
  frame=requestAnimationFrame(tick);
  // Read-only diagnostics: tests still operate through pointer and keyboard events.
  (window as any).__cube={snapshot:()=>{const s=useGame.getState();return {pieces:s.pieces,solved:solvedFaces(s.pieces),busy:!!s.active,history:s.history.length,selection:s.selection,spacing,fps:sample,celebration:s.victory?celebration:null,media:videos.map(video=>({file:video.src.split('/').at(-1),readyState:video.readyState,currentTime:video.currentTime,paused:video.paused,error:video.error?.code??null}))};},
- tilePoint:(face:number,index:number)=>{const s=lists[face][index],p=useGame.getState().pieces[s.pieceId];const pt=v(p.pos).multiplyScalar(spacing).add(v(transform(p.basis,s.normal)).multiplyScalar(.51));root.localToWorld(pt);pt.project(camera);const r=canvas.getBoundingClientRect();return {x:r.left+(pt.x+1)*r.width/2,y:r.top+(1-pt.y)*r.height/2};}};
+ tilePoint:(face:number,index:number)=>{const s=lists[face][index],p=useGame.getState().pieces[s.pieceId];const pt=v(p.pos).multiplyScalar(spacing*step).add(v(transform(p.basis,s.normal)).multiplyScalar(.51*unit));root.localToWorld(pt);pt.project(camera);const r=canvas.getBoundingClientRect();return {x:r.left+(pt.x+1)*r.width/2,y:r.top+(1-pt.y)*r.height/2};}};
  return()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();window.removeEventListener('keydown',keyboard);window.removeEventListener('cube-direction',command);window.removeEventListener('blur',cancel);document.removeEventListener('visibilitychange',cancel);videos.forEach(video=>{video.pause();video.onloadeddata=null;video.onerror=null;video.removeAttribute('src');video.load();video.remove();});renderer.dispose();starGeo.dispose();starMat.dispose();starTexture.dispose();touchCornerGeo.dispose();touchCornerMat.dispose();touchCornerCoreMat.dispose();touchCornerTexture.dispose();bodyGeo.dispose();bodyMat.dispose();outlineGeo.dispose();outlineMat.dispose();meshes.forEach(m=>m.geometry.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());if(!preview)surface.remove();canvas.remove();delete (window as any).__cube;};
  },[preview]);
  return <div className="scene" ref={host} aria-label="3Dキューブ。マスを選びWASD、または長押しスワイプで回転" />;

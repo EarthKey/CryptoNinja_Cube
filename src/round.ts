@@ -1,4 +1,4 @@
-import {fresh,turn,scramble,solvedFaces,stickers,faces,eq,transform,type Piece,type Move,type Vec} from './model';
+import {fresh,turn,scramble,solvedFaces,stickersOf,faces,eq,transform,type Piece,type Move,type Vec} from './model';
 export function prepareRound(count:number,random=Math.random,initial:Piece[]=fresh()):Move[]{
  if(!Number.isInteger(count)||count<3||count>30)throw new Error('混ぜる手数は3〜30の整数で指定してください。');
  const valid=(moves:Move[])=>solvedFaces(moves.reduce(turn,initial)).length===0;
@@ -14,7 +14,9 @@ export type Victory={worldFace:number;face:number;normal:Vec;up:Vec;right:Vec;pi
 export function firstVictory(pieces:Piece[]):Victory|null{
  const worldFace=solvedFaces(pieces)[0];if(worldFace===undefined)return null;
  const normal=faces[worldFace].normal;
- const center=stickers.find(s=>eq(pieces[s.pieceId].pos,normal)&&eq(transform(pieces[s.pieceId].basis,s.normal),normal))!;
- const basis=pieces[center.pieceId].basis;
- return {worldFace,face:center.face,normal,up:transform(basis,center.up),right:transform(basis,center.right),pieceIds:stickers.filter(s=>s.face===center.face).map(s=>s.pieceId)};
+ // Anchor to any tile facing that way, not the centre: a 2x2 has no centre piece.
+ const set=stickersOf(pieces);
+ const anchor=set.find(s=>eq(transform(pieces[s.pieceId].basis,s.normal),normal))!;
+ const basis=pieces[anchor.pieceId].basis;
+ return {worldFace,face:anchor.face,normal,up:transform(basis,anchor.up),right:transform(basis,anchor.right),pieceIds:set.filter(s=>s.face===anchor.face).map(s=>s.pieceId)};
 }

@@ -21,9 +21,13 @@ export function rotate(v:Vec,axis:Axis,dir:1|-1):Vec {
  const [x,y,z]=v;
  return (axis===0?[x,-dir*z,dir*y]:axis===1?[dir*z,y,-dir*x]:[-dir*y,dir*x,z]).map(n=>n===0?0:n) as Vec;
 }
-export function fresh():Piece[]{
+export type Size=2|3;
+// A 2x2 has no middle layer: its coordinates skip 0, so no piece is ever centred.
+export const sizeOf=(pieces:Piece[]):Size=>pieces.length===8?2:3;
+export function fresh(size:Size=3):Piece[]{
+ const range=size===2?[-1,1]:[-1,0,1];
  const result:Piece[]=[];
- for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++){
+ for(const x of range)for(const y of range)for(const z of range){
   if(x===0&&y===0&&z===0)continue;
   const home:Vec=[x,y,z]; result.push({id:result.length,home,pos:[...home],basis:identity()});
  }
@@ -34,22 +38,30 @@ export function turn(pieces:Piece[],move:Move):Piece[]{
 }
 export const inverse=(m:Move):Move=>({...m,dir:m.dir===1?-1:1});
 export type Sticker={pieceId:number; face:number; normal:Vec; up:Vec; right:Vec; col:number; row:number};
-export const stickers:Sticker[]=faces.flatMap((f,face)=>fresh().filter(p=>dot(p.home,f.normal)===1).map(p=>{
- const right=cross(f.up,f.normal);
- return {pieceId:p.id,face,normal:f.normal,up:f.up,right,col:dot(p.home,right)+1,row:dot(p.home,f.up)+1};
-}));
+export function stickersFor(size:Size=3):Sticker[]{
+ const step=size===2?2:1; // 2x2 homes are +/-1, so the tile grid steps by 2, not 1
+ return faces.flatMap((f,face)=>fresh(size).filter(p=>dot(p.home,f.normal)===1).map(p=>{
+  const right=cross(f.up,f.normal);
+  return {pieceId:p.id,face,normal:f.normal,up:f.up,right,col:(dot(p.home,right)+1)/step,row:(dot(p.home,f.up)+1)/step};
+ }));
+}
+export const stickers:Sticker[]=stickersFor(3);
+const stickerSets:Record<Size,Sticker[]>={2:stickersFor(2),3:stickers};
+export const stickersOf=(pieces:Piece[]):Sticker[]=>stickerSets[sizeOf(pieces)];
 export function solvedFaces(pieces:Piece[]):number[]{
  // A complete portrait can be rotated as a whole; tile positions AND tile orientations
- // must agree with the center's exact integer basis. View rotation never enters here.
+ // must agree with ONE arbitrary tile of that face. View rotation never enters here.
+ // Anchoring to any tile rather than the centre is what lets a 2x2 -- which has no
+ // centre piece at all -- use the very same rule as the 3x3.
+ const set=stickersOf(pieces),expected=set.length/6;
  return faces.flatMap((worldFace,index)=>{
-  const visible=stickers.filter(s=>eq(transform(pieces[s.pieceId].basis,s.normal),worldFace.normal));
-  if(visible.length!==9)return [];
-  const center=visible.find(s=>eq(pieces[s.pieceId].pos,worldFace.normal));
-  if(!center)return [];
-  const reference=pieces[center.pieceId].basis;
+  const visible=set.filter(s=>eq(transform(pieces[s.pieceId].basis,s.normal),worldFace.normal));
+  if(visible.length!==expected)return [];
+  const [anchor]=visible;
+  const reference=pieces[anchor.pieceId].basis;
   const complete=visible.every(s=>{
    const p=pieces[s.pieceId];
-   return s.face===center.face && eq(p.pos,transform(reference,p.home)) &&
+   return s.face===anchor.face && eq(p.pos,transform(reference,p.home)) &&
     eq(transform(p.basis,s.up),transform(reference,s.up)) &&
     eq(transform(p.basis,s.right),transform(reference,s.right));
   });
