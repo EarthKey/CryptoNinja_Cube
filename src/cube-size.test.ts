@@ -66,6 +66,7 @@ describe('2x2 cube',()=>{
   expect(useGame.getState().startForChildren()).toBe(true);
   const s=useGame.getState();
   expect(s.size).toBe(2);
+  expect(s.clan).toBe('甲賀');        // the one-tap child route always uses its completed art set
   expect(s.difficulty).toBe('easy');   // still pictures
   expect(s.mode).toBe('one');          // finishing any one face ends it
   expect(s.lastMix).toBe(3);

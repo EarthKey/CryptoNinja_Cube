@@ -3,12 +3,19 @@ import {fresh,turn,inverse,solvedFaces,faces,type Move,type Piece,type Sticker,t
 import {prepareRound,firstVictory,type Victory} from './round';
 export type Difficulty='easy'|'medium'|'hard';
 export const difficultyLabel:Record<Difficulty,string>={easy:'易・静止画',medium:'中・アニメ',hard:'難・全身アニメ'};
+export type Clan='甲賀'|'伊賀';
+export const clanFaceNames:Record<Clan,string[]>={
+ '甲賀':['咲耶','シャオラン','ネム','イズナ','ウカ','オト'],
+ '伊賀':['餡音','酉花','ハヤテ','結','紫苑','石舟斎'],
+};
+export const clanRoman:Record<Clan,string>={甲賀:'KOKA',伊賀:'IGA'};
 export type Active={move:Move;started:number;undo:boolean};
 type State={
  start:(n:number)=>boolean;
  // One tap for children: smallest cube, still pictures, three shuffles, finish any single face.
  startForChildren:()=>boolean;
  size:Size;setSize:(size:Size)=>void;
+ clan:Clan;setClan:(clan:Clan)=>void;
  difficulty:Difficulty;setDifficulty:(difficulty:Difficulty)=>void;
  viewFace:number;setViewFace:(face:number)=>void;
  mode:'one'|'six';phase:'ready'|'mixing'|'playing'|'won';victory:Victory|null;playMoves:number;lastMix:number;
@@ -18,8 +25,9 @@ type State={
 };
 export const useGame=create<State>((set,get)=>({
  start:n=>{try{const size=get().size;const moves=prepareRound(n,Math.random,fresh(size));set(s=>({pieces:moves.reduce(turn,fresh(size)),phase:'playing',victory:null,playMoves:0,lastMix:n,active:null,pending:[],history:[],selection:null,preview:null,moved:true,viewFace:0,resetView:s.resetView+1,notice:s.mode==='one'?'どの面でも、位置と向きを揃えればクリアです。':'6面の位置と向きを揃えましょう。'}));return true;}catch(error){set({notice:(error as Error).message});return false;}},
- startForChildren:()=>{set({size:2,difficulty:'easy',mode:'one'});return get().start(3);},
+ startForChildren:()=>{set({clan:'甲賀',size:2,difficulty:'easy',mode:'one'});return get().start(3);},
  size:3,setSize:size=>{set({size});get().reset();},
+ clan:'甲賀',setClan:clan=>{set({clan});get().reset();},
  difficulty:'easy',setDifficulty:difficulty=>set({difficulty}),
  viewFace:0,setViewFace:face=>{const s=get();if(s.active||s.phase==='won'||!Number.isInteger(face)||face<0||face>5)return;set({viewFace:face,selection:null,preview:null,resetView:s.resetView+1});},
  mode:'one',phase:'ready',victory:null,playMoves:0,lastMix:3,displaySize:'medium',
@@ -34,7 +42,7 @@ export const useGame=create<State>((set,get)=>({
  const phase=next?'mixing':mixing?'playing':victory?'won':s.phase;
  set({pieces,history,moved:true,pending,active:next?{move:next,started:performance.now(),undo:false}:null,phase,victory,
  playMoves:mixing?0:s.playMoves+1,selection:victory?null:s.selection,
- notice:next?'キューブを混ぜています…':mixing?'どの面でも、位置と向きを揃えればクリアです。':victory?faces[victory.face].name+'の面が完成しました。':solvedFaces(pieces).length===6?'すべての絵が、ひとつになりました。':'マスを選んで、次の一手。'});
+ notice:next?'キューブを混ぜています…':mixing?'どの面でも、位置と向きを揃えればクリアです。':victory?clanFaceNames[s.clan][victory.face]+'の面が完成しました。':solvedFaces(pieces).length===6?'すべての絵が、ひとつになりました。':'マスを選んで、次の一手。'});
  },
  undo:()=>{const s=get();if(s.active||!s.history.length||s.phase==='won'||s.mode==='one'&&s.phase!=='playing')return;set({active:{move:inverse(s.history.at(-1)!),started:performance.now(),undo:true},preview:null});},
  reset:()=>set(s=>({pieces:fresh(s.size),phase:'ready',victory:null,playMoves:0,active:null,pending:[],history:[],selection:null,moved:false,preview:null,resetView:s.resetView+1,notice:s.mode==='one'?'まず「3手だけ混ぜる」で始めましょう。':'最初の並びに戻しました。'})),

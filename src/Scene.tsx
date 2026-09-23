@@ -1,14 +1,14 @@
 import {useEffect,useRef} from 'react';
 import * as T from 'three';
-import {useGame} from './store';
+import {clanFaceNames,useGame,type Clan} from './store';
 import {captureControls,type Controls} from './controls';
 import {faceView,DEFAULT_YAW,VIEW_TILT,wrapYaw} from './view';
 import {celebrationAt} from './celebration';
 import {stickersFor,faces,transform,solvedFaces,type Move,type Axis,type Vec} from './model';
 
-type FaceMedia={image:string;video:string;flipX?:boolean};
+type FaceMedia={image:string;video?:string;flipX?:boolean};
 // Hard uses the adopted stage-3 clips as-is, so Sakuya's stage-1 mirror does not apply.
-const faceMedia:Partial<Record<number,FaceMedia&{hard:FaceMedia}>>={
+const kogaFaceMedia:Partial<Record<number,FaceMedia&{hard:FaceMedia}>>={
  0:{image:'/assets/sakuya.png',video:'/assets/sakuya-medium.mp4',flipX:true,hard:{image:'/assets/sakuya-hard.webp',video:'/assets/sakuya-hard.mp4'}},
  1:{image:'/assets/xiaolan.webp',video:'/assets/xiaolan-medium.mp4',hard:{image:'/assets/xiaolan-hard.webp',video:'/assets/xiaolan-hard.mp4'}},
  2:{image:'/assets/nemu.webp',video:'/assets/nemu-medium.mp4',hard:{image:'/assets/nemu-hard.webp',video:'/assets/nemu-hard.mp4'}},
@@ -16,6 +16,15 @@ const faceMedia:Partial<Record<number,FaceMedia&{hard:FaceMedia}>>={
  4:{image:'/assets/uka.webp',video:'/assets/uka-medium.mp4',hard:{image:'/assets/uka-hard.webp',video:'/assets/uka-hard.mp4'}},
  5:{image:'/assets/oto.webp',video:'/assets/oto-medium.mp4',hard:{image:'/assets/oto-hard.webp',video:'/assets/oto-hard.mp4'}},
 };
+const igaFaceMedia:Partial<Record<number,FaceMedia>>={
+ 0:{image:'/assets/iga-anne.webp',video:'/assets/iga-anne-medium.mp4'},
+ 1:{image:'/assets/iga-torika.webp',video:'/assets/iga-torika-medium.mp4'},
+ 2:{image:'/assets/iga-hayate.webp',video:'/assets/iga-hayate-medium.mp4'},
+ 3:{image:'/assets/iga-yui.webp',video:'/assets/iga-yui-medium.mp4'},
+ 4:{image:'/assets/iga-shion.webp',video:'/assets/iga-shion-medium.mp4'},
+ 5:{image:'/assets/iga-sekisyusai.webp',video:'/assets/iga-sekisyusai-medium.mp4'},
+};
+const faceMediaByClan:Record<Clan,Partial<Record<number,FaceMedia&{hard?:FaceMedia}>>>={甲賀:kogaFaceMedia,伊賀:igaFaceMedia};
 
 export function Scene({preview=false}:{preview?:boolean}){
  const host=useRef<HTMLDivElement>(null);
@@ -59,6 +68,8 @@ export function Scene({preview=false}:{preview?:boolean}){
  const touchCornerMat=new T.PointsMaterial({map:touchCornerTexture,color:'#16845b',size:.48,transparent:true,opacity:.48,depthWrite:false,blending:T.AdditiveBlending});
  const touchCornerCoreMat=new T.PointsMaterial({color:'#16845b',size:.11,transparent:true,opacity:.7,depthWrite:false});
  const touchCorners=new T.Points(touchCornerGeo,touchCornerMat),touchCornerCores=new T.Points(touchCornerGeo,touchCornerCoreMat);root.add(touchCorners,touchCornerCores);
+ const clan=preview?'甲賀':useGame.getState().clan;
+ const faceMedia=faceMediaByClan[clan];
  const difficulty=preview?'easy':useGame.getState().difficulty;const animateFaces=difficulty!=='easy';
  const textures:T.Texture[]=[];const videos:HTMLVideoElement[]=[];
  const materials:T.MeshBasicMaterial[]=[];const meshes:T.Mesh[]=[];
@@ -66,18 +77,18 @@ export function Scene({preview=false}:{preview?:boolean}){
  faces.forEach((f,i)=>{
  const c=document.createElement('canvas');c.width=c.height=512;const ctx=c.getContext('2d')!;
  ctx.fillStyle=f.color;ctx.fillRect(0,0,512,512);
- ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='bold 100px serif';ctx.fillText(f.name,256,285);
+ ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='bold 100px serif';ctx.fillText(clanFaceNames[clan][i],256,285);
  ctx.font='24px sans-serif';
  const cell=512/cubeSize;
  for(let y=0;y<cubeSize;y++)for(let x=0;x<cubeSize;x++){ctx.fillText('↑',x*cell+cell/2,y*cell+cell*.22);ctx.fillText(String(y*cubeSize+x+1),x*cell+cell/2,y*cell+cell*.88);}
  const fallback=new T.CanvasTexture(c);fallback.colorSpace=T.SRGBColorSpace;textures.push(fallback);
  const mat=new T.MeshBasicMaterial({map:fallback});materials.push(mat);
- const base=faceMedia[i],media=base&&difficulty==='hard'?base.hard:base;let videoReady=false;
- if(media)new T.TextureLoader().load(media.image,tex=>{if(disposed){tex.dispose();return;}tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());textures.push(tex);if(!videoReady){mat.map=tex;mat.needsUpdate=true;}},undefined,()=>useGame.setState({notice:`${f.name}の画像を読み込めません。${media.image} を確認してください。`}));
- if(media&&animateFaces){
+ const base=faceMedia[i],media=base&&difficulty==='hard'&&base.hard?base.hard:base;let videoReady=false;
+ if(media)new T.TextureLoader().load(media.image,tex=>{if(disposed){tex.dispose();return;}tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());textures.push(tex);if(!videoReady){mat.map=tex;mat.needsUpdate=true;}},undefined,()=>useGame.setState({notice:`${clanFaceNames[clan][i]}の画像を読み込めません。${media.image} を確認してください。`}));
+ if(media?.video&&animateFaces){
   const video=document.createElement('video');videos.push(video);video.className='face-video-source';video.hidden=true;video.setAttribute('aria-hidden','true');video.src=media.video;video.muted=true;video.loop=true;video.playsInline=true;video.preload='auto';video.disablePictureInPicture=true;el.appendChild(video);
   video.onloadeddata=()=>{if(disposed)return;videoReady=true;const tex=new T.VideoTexture(video);tex.colorSpace=T.SRGBColorSpace;tex.minFilter=T.LinearFilter;tex.magFilter=T.LinearFilter;textures.push(tex);mat.map=tex;mat.needsUpdate=true;if(!useGame.getState().reduced)void video.play().catch(()=>{});};
-  video.onerror=()=>useGame.setState({notice:`${f.name}のアニメを読み込めません。静止画で表示します。${media.video} を確認してください。`});video.load();
+  video.onerror=()=>useGame.setState({notice:`${clanFaceNames[clan][i]}のアニメを読み込めません。静止画で表示します。${media.video} を確認してください。`});video.load();
  }
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(new Float32Array(perFace*12),3));
  const uv:number[]=[],ix:number[]=[];
