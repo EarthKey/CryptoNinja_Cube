@@ -24,7 +24,23 @@ const igaFaceMedia:Partial<Record<number,FaceMedia>>={
  4:{image:'/assets/iga-shion.webp',video:'/assets/iga-shion-medium.mp4'},
  5:{image:'/assets/iga-sekisyusai.webp',video:'/assets/iga-sekisyusai-medium.mp4'},
 };
-const faceMediaByClan:Record<Clan,Partial<Record<number,FaceMedia&{hard?:FaceMedia}>>>={甲賀:kogaFaceMedia,伊賀:igaFaceMedia};
+const fumaFaceMedia:Record<number,FaceMedia>={
+ 0:{image:'/assets/fuma-rotten.webp'},
+ 1:{image:'/assets/fuma-atoza.webp'},
+ 2:{image:'/assets/fuma-janome.webp'},
+ 3:{image:'/assets/fuma-karma.webp'},
+ 4:{image:'/assets/fuma-aum.webp'},
+ 5:{image:'/assets/fuma-ibuki.webp'},
+};
+const saikaFaceMedia:Record<number,FaceMedia>={
+ 0:{image:'/assets/saika-shiba.webp'},
+ 1:{image:'/assets/saika-nagisa.webp'},
+ 2:{image:'/assets/saika-mami.webp'},
+ 3:{image:'/assets/saika-benten.webp'},
+ 4:{image:'/assets/saika-seori.webp'},
+ 5:{image:'/assets/saika-magoichi.webp'},
+};
+const faceMediaByClan:Record<Clan,Partial<Record<number,FaceMedia&{hard?:FaceMedia}>>>={甲賀:kogaFaceMedia,伊賀:igaFaceMedia,風魔:fumaFaceMedia,雑賀:saikaFaceMedia};
 
 export function Scene({preview=false}:{preview?:boolean}){
  const host=useRef<HTMLDivElement>(null);

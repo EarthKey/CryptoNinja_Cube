@@ -3,12 +3,14 @@ import {fresh,turn,inverse,solvedFaces,faces,type Move,type Piece,type Sticker,t
 import {prepareRound,firstVictory,type Victory} from './round';
 export type Difficulty='easy'|'medium'|'hard';
 export const difficultyLabel:Record<Difficulty,string>={easy:'易・静止画',medium:'中・アニメ',hard:'難・全身アニメ'};
-export type Clan='甲賀'|'伊賀';
+export type Clan='甲賀'|'伊賀'|'風魔'|'雑賀';
 export const clanFaceNames:Record<Clan,string[]>={
  '甲賀':['咲耶','シャオラン','ネム','イズナ','ウカ','オト'],
  '伊賀':['餡音','酉花','ハヤテ','結','紫苑','石舟斎'],
+ '風魔':['呂屯','アトザ','蛇ノ目','カルマ','アウン','イブキ'],
+ '雑賀':['柴','凪紗','マミ','弁天','瀬織','孫市'],
 };
-export const clanRoman:Record<Clan,string>={甲賀:'KOKA',伊賀:'IGA'};
+export const clanRoman:Record<Clan,string>={甲賀:'KOKA',伊賀:'IGA',風魔:'FUMA',雑賀:'SAIKA'};
 export type Active={move:Move;started:number;undo:boolean};
 type State={
  start:(n:number)=>boolean;

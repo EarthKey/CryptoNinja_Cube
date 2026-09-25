@@ -28,6 +28,6 @@ export function Bgm(){
    <source src="/assets/koga-bgm.ogg" type="audio/ogg"/>
   </audio>
   <span>音楽</span><button type="button" role="switch" aria-label="BGM" aria-checked={available&&enabled&&!needsStart} disabled={!available} onClick={toggle}>{label}</button>
-  <small>{available?(waiting?'3秒休止中':'曲間3秒'):'伊賀BGMは準備中'}</small>
+  <small>{available?(waiting?'3秒休止中':'曲間3秒'):'このクランのBGMは準備中'}</small>
  </div>;
 }
