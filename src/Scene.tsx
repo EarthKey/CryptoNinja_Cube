@@ -26,20 +26,20 @@ const igaFaceMedia:Partial<Record<number,FaceMedia>>={
  5:{image:'/assets/iga-sekisyusai.webp',video:'/assets/iga-sekisyusai-medium.mp4'},
 };
 const fumaFaceMedia:Record<number,FaceMedia>={
- 0:{image:'/assets/fuma-rotten.webp',video:'/assets/fuma-rotten-medium.mp4',once:true},
- 1:{image:'/assets/fuma-atoza.webp',video:'/assets/fuma-atoza-medium.mp4',once:true},
+ 0:{image:'/assets/fuma-rotten.webp',video:'/assets/fuma-rotten-medium.mp4'},
+ 1:{image:'/assets/fuma-atoza.webp',video:'/assets/fuma-atoza-medium.mp4'},
  2:{image:'/assets/fuma-janome.webp',video:'/assets/fuma-janome-medium.mp4'},
- 3:{image:'/assets/fuma-karma.webp',video:'/assets/fuma-karma-medium.mp4',once:true},
- 4:{image:'/assets/fuma-aum.webp',video:'/assets/fuma-aum-medium.mp4',once:true},
- 5:{image:'/assets/fuma-ibuki.webp',video:'/assets/fuma-ibuki-medium.mp4',once:true},
+ 3:{image:'/assets/fuma-karma.webp',video:'/assets/fuma-karma-medium.mp4'},
+ 4:{image:'/assets/fuma-aum.webp',video:'/assets/fuma-aum-medium.mp4'},
+ 5:{image:'/assets/fuma-ibuki.webp',video:'/assets/fuma-ibuki-medium.mp4'},
 };
 const saikaFaceMedia:Record<number,FaceMedia>={
  0:{image:'/assets/saika-shiba.webp',video:'/assets/saika-shiba-medium.mp4'},
- 1:{image:'/assets/saika-nagisa.webp',video:'/assets/saika-nagisa-medium.mp4',once:true},
- 2:{image:'/assets/saika-mami.webp',video:'/assets/saika-mami-medium.mp4',once:true},
- 3:{image:'/assets/saika-benten.webp',video:'/assets/saika-benten-medium.mp4',once:true},
- 4:{image:'/assets/saika-seori.webp',video:'/assets/saika-seori-medium.mp4',once:true},
- 5:{image:'/assets/saika-magoichi.webp',video:'/assets/saika-magoichi-medium.mp4',once:true},
+ 1:{image:'/assets/saika-nagisa.webp',video:'/assets/saika-nagisa-medium.mp4'},
+ 2:{image:'/assets/saika-mami.webp',video:'/assets/saika-mami-medium.mp4'},
+ 3:{image:'/assets/saika-benten.webp',video:'/assets/saika-benten-medium.mp4'},
+ 4:{image:'/assets/saika-seori.webp',video:'/assets/saika-seori-medium.mp4'},
+ 5:{image:'/assets/saika-magoichi.webp',video:'/assets/saika-magoichi-medium.mp4'},
 };
 const faceMediaByClan:Record<Clan,Partial<Record<number,FaceMedia&{hard?:FaceMedia}>>>={甲賀:kogaFaceMedia,伊賀:igaFaceMedia,風魔:fumaFaceMedia,雑賀:saikaFaceMedia};
 
@@ -178,12 +178,13 @@ export function Scene({preview=false}:{preview?:boolean}){
  window.addEventListener('blur',cancel);document.addEventListener('visibilitychange',cancel);
  const resize=()=>{const w=el.clientWidth,h=el.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.position.z=camera.aspect<.8?10.8:9;camera.updateProjectionMatrix();};
  const observer=new ResizeObserver(resize);observer.observe(el);resize();
- let sample=0,frames=0,sampleStart=performance.now(),lastVideoEnabled:boolean|null=null;
+ let sample=0,frames=0,sampleStart=performance.now(),lastVideoEnabled:boolean|null=null,nextVideoRetry=0;
  const tick=(now:number)=>{
  frame=requestAnimationFrame(tick);const dt=Math.min((now-previous)/1000,.04);previous=now;
  const state=useGame.getState();
  const videoEnabled=!state.reduced&&document.visibilityState==='visible';
  if(videoEnabled!==lastVideoEnabled){lastVideoEnabled=videoEnabled;videos.forEach(video=>{if(videoEnabled&&video.readyState>=2&&!video.ended)void video.play().catch(()=>{});else video.pause();});}
+ if(videoEnabled&&now>=nextVideoRetry){nextVideoRetry=now+1000;videos.forEach(video=>{if(video.paused&&video.readyState>=2&&!video.ended)void video.play().catch(()=>{});});}
  if(state.resetView!==lastReset){lastReset=state.resetView;initial();cancel();controls=null;state.select(null);}
  if(!drag&&!state.selection&&!state.reduced&&!state.active&&state.phase!=='won'){yaw=wrapYaw(yaw+vx*dt*60);pitch=wrapYaw(pitch+vy*dt*60);vx*=Math.exp(-6*dt);vy*=Math.exp(-6*dt);}
  if(state.phase!=='won')root.quaternion.copy(faceView(state.viewFace,yaw,pitch));
