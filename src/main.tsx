@@ -1,6 +1,6 @@
 import React,{useState,useEffect} from 'react';
 import {createRoot} from 'react-dom/client';
-import {Scene} from './Scene';
+import {Scene,stage3Notice} from './Scene';
 import {Entry} from './Entry';
 import {Bgm} from './Bgm';
 import {clanFaceNames,clanRoman,useGame,difficultyLabel} from './store';
@@ -25,6 +25,7 @@ function App(){
  <section className="intro"><span className="eyebrow">ひと回しで、絵がつながる。</span><h1>CryptoNinja <em>Cube</em></h1><p>浮かぶピースを回して、6つの絵をひとつに。</p></section>
  {!playing?<Entry onStart={()=>{setPlaying(true);window.scrollTo(0,0);}}/>:<>
  <div className="game-menu"><span>{s.clan} / {difficultyLabel[s.difficulty]} · {s.lastMix}手でスタート</span><button onClick={()=>{setPlaying(false);window.scrollTo(0,0);}}>← 条件を選び直す</button></div>
+ {s.difficulty==='hard'&&stage3Notice(s.clan)?<p className="entry-note">{stage3Notice(s.clan)}</p>:null}
  <section className="play-area">
  <div className="theme-row"><Bgm/><div className="theme-choice"><span>画面</span><span className={!dark?'theme-current':''}>クリーム</span><button className="theme-toggle" type="button" role="switch" aria-label="ダーク表示" aria-checked={dark} onClick={()=>setDark(!dark)}><span className="theme-thumb"/></button><span className={dark?'theme-current':''}>ダーク</span></div></div>
  <div className={'stage size-'+s.displaySize+(s.reduced?' motion-off':'')}><div className="stage-label">{s.clan} <span>{clanRoman[s.clan]}</span></div>

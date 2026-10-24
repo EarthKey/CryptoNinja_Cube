@@ -31,6 +31,8 @@ public/assets/
 !public/assets/iga-shion.webp
 !public/assets/iga-sekisyusai.webp
 !public/assets/iga-anne-medium.mp4
+!public/assets/iga-anne-hard.mp4
+!public/assets/iga-anne-hard.webp
 !public/assets/iga-torika-medium.mp4
 !public/assets/iga-hayate-medium.mp4
 !public/assets/iga-yui-medium.mp4
@@ -86,3 +88,15 @@ public/assets/
 !public/assets/saika-benten.webp
 !public/assets/saika-seori.webp
 !public/assets/saika-magoichi.webp
+
+# Adopted Iga stage-3 runtime clips and their first-frame posters.
+!public/assets/iga-torika-hard.mp4
+!public/assets/iga-torika-hard.webp
+!public/assets/iga-hayate-hard.mp4
+!public/assets/iga-hayate-hard.webp
+!public/assets/iga-yui-hard.mp4
+!public/assets/iga-yui-hard.webp
+!public/assets/iga-shion-hard.mp4
+!public/assets/iga-shion-hard.webp
+!public/assets/iga-sekisyusai-hard.mp4
+!public/assets/iga-sekisyusai-hard.webp

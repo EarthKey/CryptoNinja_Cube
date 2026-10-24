@@ -17,13 +17,13 @@ const kogaFaceMedia:Partial<Record<number,FaceMedia&{hard:FaceMedia}>>={
  4:{image:'/assets/uka.webp',video:'/assets/uka-medium.mp4',hard:{image:'/assets/uka-hard.webp',video:'/assets/uka-hard.mp4'}},
  5:{image:'/assets/oto.webp',video:'/assets/oto-medium.mp4',hard:{image:'/assets/oto-hard.webp',video:'/assets/oto-hard.mp4'}},
 };
-const igaFaceMedia:Partial<Record<number,FaceMedia>>={
- 0:{image:'/assets/iga-anne.webp',video:'/assets/iga-anne-medium.mp4'},
- 1:{image:'/assets/iga-torika.webp',video:'/assets/iga-torika-medium.mp4'},
- 2:{image:'/assets/iga-hayate.webp',video:'/assets/iga-hayate-medium.mp4'},
- 3:{image:'/assets/iga-yui.webp',video:'/assets/iga-yui-medium.mp4'},
- 4:{image:'/assets/iga-shion.webp',video:'/assets/iga-shion-medium.mp4'},
- 5:{image:'/assets/iga-sekisyusai.webp',video:'/assets/iga-sekisyusai-medium.mp4'},
+const igaFaceMedia:Partial<Record<number,FaceMedia&{hard?:FaceMedia}>>={
+ 0:{image:'/assets/iga-anne.webp',video:'/assets/iga-anne-medium.mp4',hard:{image:'/assets/iga-anne-hard.webp',video:'/assets/iga-anne-hard.mp4'}},
+ 1:{image:'/assets/iga-torika.webp',video:'/assets/iga-torika-medium.mp4',hard:{image:'/assets/iga-torika-hard.webp',video:'/assets/iga-torika-hard.mp4'}},
+ 2:{image:'/assets/iga-hayate.webp',video:'/assets/iga-hayate-medium.mp4',hard:{image:'/assets/iga-hayate-hard.webp',video:'/assets/iga-hayate-hard.mp4'}},
+ 3:{image:'/assets/iga-yui.webp',video:'/assets/iga-yui-medium.mp4',hard:{image:'/assets/iga-yui-hard.webp',video:'/assets/iga-yui-hard.mp4'}},
+ 4:{image:'/assets/iga-shion.webp',video:'/assets/iga-shion-medium.mp4',hard:{image:'/assets/iga-shion-hard.webp',video:'/assets/iga-shion-hard.mp4'}},
+ 5:{image:'/assets/iga-sekisyusai.webp',video:'/assets/iga-sekisyusai-medium.mp4',hard:{image:'/assets/iga-sekisyusai-hard.webp',video:'/assets/iga-sekisyusai-hard.mp4'}},
 };
 const fumaFaceMedia:Record<number,FaceMedia>={
  0:{image:'/assets/fuma-rotten.webp',video:'/assets/fuma-rotten-medium.mp4'},
@@ -42,6 +42,15 @@ const saikaFaceMedia:Record<number,FaceMedia>={
  5:{image:'/assets/saika-magoichi.webp',video:'/assets/saika-magoichi-medium.mp4'},
 };
 const faceMediaByClan:Record<Clan,Partial<Record<number,FaceMedia&{hard?:FaceMedia}>>>={甲賀:kogaFaceMedia,伊賀:igaFaceMedia,風魔:fumaFaceMedia,雑賀:saikaFaceMedia};
+
+export function stage3Progress(clan:Clan){
+ const names=clanFaceNames[clan].filter((_,i)=>faceMediaByClan[clan][i]?.hard?.video);
+ return {names,complete:names.length===clanFaceNames[clan].length};
+}
+export function stage3Notice(clan:Clan){
+ const {names,complete}=stage3Progress(clan);
+ return names.length&&!complete?`${names.join('・')}の全身アニメを先行収録。ほかの${clanFaceNames[clan].length-names.length}人は制作中のため「中」のアニメで遊べます。`:'';
+}
 
 export function Scene({preview=false}:{preview?:boolean}){
  const host=useRef<HTMLDivElement>(null);
