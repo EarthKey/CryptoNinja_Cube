@@ -53,9 +53,10 @@ try{
  assert.ok((await snapshot()).media.every(v=>v.file.endsWith('-hard.mp4')));
  assert.equal(await page.getByText(/全身アニメを先行収録/).count(),0);
  for(const clan of ['雑賀']){
-  await page.goto(base);await page.locator(`[data-clan="${clan}"]`).click();
-  assert.equal(await page.locator('.difficulty-list .hard').isDisabled(),true);
+  await start(clan,'hard');
+  await page.waitForFunction(()=>window.__cube.snapshot().media.length===6&&window.__cube.snapshot().media.every(v=>v.readyState>=2));
+  assert.ok((await snapshot()).media.every(v=>v.file.startsWith('saika-')&&v.file.endsWith('-hard.mp4')));
  }
  assert.deepEqual(errors,[]);assert.deepEqual(httpErrors,[]);
- console.log(JSON.stringify({base,results,regressions:{igaMedium:true,igaEasy:true,kogaHard:true,unmadeStagesLocked:true},errors,httpErrors},null,2));
+ console.log(JSON.stringify({base,results,regressions:{igaMedium:true,igaEasy:true,kogaHard:true,saikaHard:true},errors,httpErrors},null,2));
 }finally{await browser.close();}

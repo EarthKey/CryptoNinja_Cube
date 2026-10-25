@@ -33,13 +33,13 @@ const fumaFaceMedia:Record<number,FaceMedia&{hard:FaceMedia}>={
  4:{image:'/assets/fuma-aum.webp',video:'/assets/fuma-aum-medium.mp4',hard:{image:'/assets/fuma-aum-hard.webp',video:'/assets/fuma-aum-hard.mp4'}},
  5:{image:'/assets/fuma-ibuki.webp',video:'/assets/fuma-ibuki-medium.mp4',hard:{image:'/assets/fuma-ibuki-hard.webp',video:'/assets/fuma-ibuki-hard.mp4'}},
 };
-const saikaFaceMedia:Record<number,FaceMedia>={
- 0:{image:'/assets/saika-shiba.webp',video:'/assets/saika-shiba-medium.mp4'},
- 1:{image:'/assets/saika-nagisa.webp',video:'/assets/saika-nagisa-medium.mp4'},
- 2:{image:'/assets/saika-mami.webp',video:'/assets/saika-mami-medium.mp4'},
- 3:{image:'/assets/saika-benten.webp',video:'/assets/saika-benten-medium.mp4'},
- 4:{image:'/assets/saika-seori.webp',video:'/assets/saika-seori-medium.mp4'},
- 5:{image:'/assets/saika-magoichi.webp',video:'/assets/saika-magoichi-medium.mp4'},
+const saikaFaceMedia:Record<number,FaceMedia&{hard:FaceMedia}>={
+ 0:{image:'/assets/saika-shiba.webp',video:'/assets/saika-shiba-medium.mp4',hard:{image:'/assets/saika-shiba-hard.webp',video:'/assets/saika-shiba-hard.mp4'}},
+ 1:{image:'/assets/saika-nagisa.webp',video:'/assets/saika-nagisa-medium.mp4',hard:{image:'/assets/saika-nagisa-hard.webp',video:'/assets/saika-nagisa-hard.mp4'}},
+ 2:{image:'/assets/saika-mami.webp',video:'/assets/saika-mami-medium.mp4',hard:{image:'/assets/saika-mami-hard.webp',video:'/assets/saika-mami-hard.mp4'}},
+ 3:{image:'/assets/saika-benten.webp',video:'/assets/saika-benten-medium.mp4',hard:{image:'/assets/saika-benten-hard.webp',video:'/assets/saika-benten-hard.mp4'}},
+ 4:{image:'/assets/saika-seori.webp',video:'/assets/saika-seori-medium.mp4',hard:{image:'/assets/saika-seori-hard.webp',video:'/assets/saika-seori-hard.mp4'}},
+ 5:{image:'/assets/saika-magoichi.webp',video:'/assets/saika-magoichi-medium.mp4',hard:{image:'/assets/saika-magoichi-hard.webp',video:'/assets/saika-magoichi-hard.mp4'}},
 };
 const faceMediaByClan:Record<Clan,Partial<Record<number,FaceMedia&{hard?:FaceMedia}>>>={甲賀:kogaFaceMedia,伊賀:igaFaceMedia,風魔:fumaFaceMedia,雑賀:saikaFaceMedia};
 
