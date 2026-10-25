@@ -25,13 +25,13 @@ const igaFaceMedia:Partial<Record<number,FaceMedia&{hard?:FaceMedia}>>={
  4:{image:'/assets/iga-shion.webp',video:'/assets/iga-shion-medium.mp4',hard:{image:'/assets/iga-shion-hard.webp',video:'/assets/iga-shion-hard.mp4'}},
  5:{image:'/assets/iga-sekisyusai.webp',video:'/assets/iga-sekisyusai-medium.mp4',hard:{image:'/assets/iga-sekisyusai-hard.webp',video:'/assets/iga-sekisyusai-hard.mp4'}},
 };
-const fumaFaceMedia:Record<number,FaceMedia>={
- 0:{image:'/assets/fuma-rotten.webp',video:'/assets/fuma-rotten-medium.mp4'},
- 1:{image:'/assets/fuma-atoza.webp',video:'/assets/fuma-atoza-medium.mp4'},
- 2:{image:'/assets/fuma-janome.webp',video:'/assets/fuma-janome-medium.mp4'},
- 3:{image:'/assets/fuma-karma.webp',video:'/assets/fuma-karma-medium.mp4'},
- 4:{image:'/assets/fuma-aum.webp',video:'/assets/fuma-aum-medium.mp4'},
- 5:{image:'/assets/fuma-ibuki.webp',video:'/assets/fuma-ibuki-medium.mp4'},
+const fumaFaceMedia:Record<number,FaceMedia&{hard:FaceMedia}>={
+ 0:{image:'/assets/fuma-rotten.webp',video:'/assets/fuma-rotten-medium.mp4',hard:{image:'/assets/fuma-rotten-hard.webp',video:'/assets/fuma-rotten-hard.mp4'}},
+ 1:{image:'/assets/fuma-atoza.webp',video:'/assets/fuma-atoza-medium.mp4',hard:{image:'/assets/fuma-atoza-hard.webp',video:'/assets/fuma-atoza-hard.mp4'}},
+ 2:{image:'/assets/fuma-janome.webp',video:'/assets/fuma-janome-medium.mp4',hard:{image:'/assets/fuma-janome-hard.webp',video:'/assets/fuma-janome-hard.mp4'}},
+ 3:{image:'/assets/fuma-karma.webp',video:'/assets/fuma-karma-medium.mp4',hard:{image:'/assets/fuma-karma-hard.webp',video:'/assets/fuma-karma-hard.mp4'}},
+ 4:{image:'/assets/fuma-aum.webp',video:'/assets/fuma-aum-medium.mp4',hard:{image:'/assets/fuma-aum-hard.webp',video:'/assets/fuma-aum-hard.mp4'}},
+ 5:{image:'/assets/fuma-ibuki.webp',video:'/assets/fuma-ibuki-medium.mp4',hard:{image:'/assets/fuma-ibuki-hard.webp',video:'/assets/fuma-ibuki-hard.mp4'}},
 };
 const saikaFaceMedia:Record<number,FaceMedia>={
  0:{image:'/assets/saika-shiba.webp',video:'/assets/saika-shiba-medium.mp4'},

@@ -52,7 +52,7 @@ try{
  await page.waitForFunction(()=>window.__cube.snapshot().media.length===6&&window.__cube.snapshot().media.every(v=>v.readyState>=2));
  assert.ok((await snapshot()).media.every(v=>v.file.endsWith('-hard.mp4')));
  assert.equal(await page.getByText(/全身アニメを先行収録/).count(),0);
- for(const clan of ['風魔','雑賀']){
+ for(const clan of ['雑賀']){
   await page.goto(base);await page.locator(`[data-clan="${clan}"]`).click();
   assert.equal(await page.locator('.difficulty-list .hard').isDisabled(),true);
  }
