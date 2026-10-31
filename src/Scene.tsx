@@ -7,7 +7,7 @@ import {celebrationAt} from './celebration';
 import {stickersFor,faces,transform,solvedFaces,type Move,type Axis,type Vec} from './model';
 
 // once: the clip plays a single time and rests on its final frame (the pose it ends on).
-type FaceMedia={image:string;video?:string;flipX?:boolean;once?:boolean};
+type FaceMedia={image:string;mediumImage?:string;video?:string;flipX?:boolean;once?:boolean};
 // Hard uses the adopted stage-3 clips as-is, so Sakuya's stage-1 mirror does not apply.
 const kogaFaceMedia:Partial<Record<number,FaceMedia&{hard:FaceMedia}>>={
  0:{image:'/assets/sakuya.png',video:'/assets/sakuya-medium.mp4',flipX:true,hard:{image:'/assets/sakuya-hard.webp',video:'/assets/sakuya-hard.mp4'}},
@@ -41,7 +41,15 @@ const saikaFaceMedia:Record<number,FaceMedia&{hard:FaceMedia}>={
  4:{image:'/assets/saika-seori.webp',video:'/assets/saika-seori-medium.mp4',hard:{image:'/assets/saika-seori-hard.webp',video:'/assets/saika-seori-hard.mp4'}},
  5:{image:'/assets/saika-magoichi.webp',video:'/assets/saika-magoichi-medium.mp4',hard:{image:'/assets/saika-magoichi-hard.webp',video:'/assets/saika-magoichi-hard.mp4'}},
 };
-const faceMediaByClan:Record<Clan,Partial<Record<number,FaceMedia&{hard?:FaceMedia}>>>={甲賀:kogaFaceMedia,伊賀:igaFaceMedia,風魔:fumaFaceMedia,雑賀:saikaFaceMedia};
+const nenokuniFaceMedia:Record<number,FaceMedia&{hard:FaceMedia}>={
+ 0:{image:'/assets/nenokuni-sasagane.webp',mediumImage:'/assets/nenokuni-sasagane-medium.webp',video:'/assets/nenokuni-sasagane-medium.mp4',hard:{image:'/assets/nenokuni-sasagane-hard.webp',video:'/assets/nenokuni-sasagane-hard.mp4'}},
+ 1:{image:'/assets/nenokuni-gokou.webp',mediumImage:'/assets/nenokuni-gokou-medium.webp',video:'/assets/nenokuni-gokou-medium.mp4',hard:{image:'/assets/nenokuni-gokou-hard.webp',video:'/assets/nenokuni-gokou-hard.mp4'}},
+ 2:{image:'/assets/nenokuni-shinra.webp',mediumImage:'/assets/nenokuni-shinra-medium.webp',video:'/assets/nenokuni-shinra-medium.mp4',hard:{image:'/assets/nenokuni-shinra-hard.webp',video:'/assets/nenokuni-shinra-hard.mp4'}},
+ 3:{image:'/assets/nenokuni-sasura.webp',mediumImage:'/assets/nenokuni-sasura-medium.webp',video:'/assets/nenokuni-sasura-medium.mp4',hard:{image:'/assets/nenokuni-sasura-hard.webp',video:'/assets/nenokuni-sasura-hard.mp4'}},
+ 4:{image:'/assets/nenokuni-yami.webp',mediumImage:'/assets/nenokuni-yami-medium.webp',video:'/assets/nenokuni-yami-medium.mp4',hard:{image:'/assets/nenokuni-yami-hard.webp',video:'/assets/nenokuni-yami-hard.mp4'}},
+ 5:{image:'/assets/nenokuni-yomi.webp',mediumImage:'/assets/nenokuni-yomi-medium.webp',video:'/assets/nenokuni-yomi-medium.mp4',hard:{image:'/assets/nenokuni-yomi-hard.webp',video:'/assets/nenokuni-yomi-hard.mp4'}},
+};
+const faceMediaByClan:Record<Clan,Partial<Record<number,FaceMedia&{hard?:FaceMedia}>>>={甲賀:kogaFaceMedia,伊賀:igaFaceMedia,風魔:fumaFaceMedia,雑賀:saikaFaceMedia,根の国:nenokuniFaceMedia};
 
 export function stage3Progress(clan:Clan){
  const names=clanFaceNames[clan].filter((_,i)=>faceMediaByClan[clan][i]?.hard?.video);
@@ -109,7 +117,7 @@ export function Scene({preview=false}:{preview?:boolean}){
  for(let y=0;y<cubeSize;y++)for(let x=0;x<cubeSize;x++){ctx.fillText('↑',x*cell+cell/2,y*cell+cell*.22);ctx.fillText(String(y*cubeSize+x+1),x*cell+cell/2,y*cell+cell*.88);}
  const fallback=new T.CanvasTexture(c);fallback.colorSpace=T.SRGBColorSpace;textures.push(fallback);
  const mat=new T.MeshBasicMaterial({map:fallback});materials.push(mat);
- const base=faceMedia[i],media=base&&difficulty==='hard'&&base.hard?base.hard:base;let videoReady=false;
+ const base=faceMedia[i],media=base&&difficulty==='hard'&&base.hard?base.hard:base&&difficulty==='medium'&&base.mediumImage?{...base,image:base.mediumImage}:base;let videoReady=false;
  if(media)new T.TextureLoader().load(media.image,tex=>{if(disposed){tex.dispose();return;}tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());textures.push(tex);if(!videoReady){mat.map=tex;mat.needsUpdate=true;}},undefined,()=>useGame.setState({notice:`${clanFaceNames[clan][i]}の画像を読み込めません。${media.image} を確認してください。`}));
  if(media?.video&&animateFaces){
   const video=document.createElement('video');videos.push(video);video.className='face-video-source';video.hidden=true;video.setAttribute('aria-hidden','true');video.src=media.video;video.muted=true;video.loop=!media.once;video.playsInline=true;video.preload='auto';video.disablePictureInPicture=true;el.appendChild(video);
