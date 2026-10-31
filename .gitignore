@@ -166,3 +166,6 @@ public/assets/
 # User-adopted Ne no Kuni BGM.
 !public/assets/nenokuni-bgm.m4a
 !public/assets/nenokuni-bgm.ogg
+
+# Adopted Sakuya title art, fitted without cropping for social previews.
+!public/assets/ogp-sakuya-1031-v1.jpg
