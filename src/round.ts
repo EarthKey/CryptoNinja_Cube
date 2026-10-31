@@ -11,12 +11,14 @@ export function prepareRound(count:number,random=Math.random,initial:Piece[]=fre
  const result=search([]);if(!result)throw new Error('未完成の開始配置を作れませんでした。もう一度お試しください。');return result;
 }
 export type Victory={worldFace:number;face:number;normal:Vec;up:Vec;right:Vec;pieceIds:number[]};
-export function firstVictory(pieces:Piece[]):Victory|null{
- const worldFace=solvedFaces(pieces)[0];if(worldFace===undefined)return null;
+export function completedVictories(pieces:Piece[]):Victory[]{
+ return solvedFaces(pieces).map(worldFace=>{
  const normal=faces[worldFace].normal;
  // Anchor to any tile facing that way, not the centre: a 2x2 has no centre piece.
  const set=stickersOf(pieces);
  const anchor=set.find(s=>eq(transform(pieces[s.pieceId].basis,s.normal),normal))!;
  const basis=pieces[anchor.pieceId].basis;
  return {worldFace,face:anchor.face,normal,up:transform(basis,anchor.up),right:transform(basis,anchor.right),pieceIds:set.filter(s=>s.face===anchor.face).map(s=>s.pieceId)};
+ });
 }
+export function firstVictory(pieces:Piece[]):Victory|null{return completedVictories(pieces)[0]||null;}

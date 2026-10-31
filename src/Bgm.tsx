@@ -2,10 +2,11 @@ import {useCallback,useEffect,useRef,useState} from 'react';
 import {scheduleBgmReplay} from './bgm-loop';
 import {useGame,type Clan} from './store';
 
-const bgmByClan:Partial<Record<Clan,string>>={甲賀:'koga',伊賀:'iga',風魔:'fuma',雑賀:'saika'};
+const bgmByClan:Partial<Record<Clan,string>>={甲賀:'koga',伊賀:'iga',風魔:'fuma',雑賀:'saika',根の国:'nenokuni'};
 
 export function Bgm(){
  const clan=useGame(state=>state.clan);
+ const suspended=useGame(state=>state.suspended);
  const source=bgmByClan[clan];
  const available=!!source;
  const audio=useRef<HTMLAudioElement>(null);
@@ -18,12 +19,12 @@ export function Bgm(){
  useEffect(()=>{
   const el=audio.current;if(!el)return;
   el.volume=.32;
-  if(enabled&&available)playNow();else{clearTimer();el.pause();}
+  if(enabled&&available&&!suspended)playNow();else{clearTimer();el.pause();}
   try{localStorage.setItem('cube-bgm',enabled?'on':'off');}catch{}
   return ()=>clearTimer();
- },[enabled,available,source,playNow,clearTimer]);
+ },[enabled,available,source,suspended,playNow,clearTimer]);
  useEffect(()=>()=>{clearTimer();audio.current?.pause();},[clearTimer]);
- const ended=()=>{if(!enabled)return;setWaiting(true);timer.current=scheduleBgmReplay(()=>{timer.current=null;setWaiting(false);if(audio.current)audio.current.currentTime=0;playNow();},window.setTimeout);};
+ const ended=()=>{if(!enabled||suspended)return;setWaiting(true);timer.current=scheduleBgmReplay(()=>{timer.current=null;setWaiting(false);if(audio.current)audio.current.currentTime=0;playNow();},window.setTimeout);};
  const toggle=()=>{if(!available)return;if(needsStart){playNow();return;}setEnabled(value=>!value);};
  const label=!available?'BGM準備中':needsStart?'BGMを再生':enabled?'BGM ON':'BGM OFF';
  return <div className="bgm-choice">

@@ -1,4 +1,5 @@
 import {useEffect,useRef} from 'react';
+import {faceMediaByClan,getFaceMedia} from './media';
 import * as T from 'three';
 import {clanFaceNames,useGame,type Clan} from './store';
 import {captureControls,type Controls} from './controls';
@@ -6,50 +7,6 @@ import {faceView,DEFAULT_YAW,VIEW_TILT,wrapYaw} from './view';
 import {celebrationAt} from './celebration';
 import {stickersFor,faces,transform,solvedFaces,type Move,type Axis,type Vec} from './model';
 
-// once: the clip plays a single time and rests on its final frame (the pose it ends on).
-type FaceMedia={image:string;mediumImage?:string;video?:string;flipX?:boolean;once?:boolean};
-// Hard uses the adopted stage-3 clips as-is, so Sakuya's stage-1 mirror does not apply.
-const kogaFaceMedia:Partial<Record<number,FaceMedia&{hard:FaceMedia}>>={
- 0:{image:'/assets/sakuya.png',video:'/assets/sakuya-medium.mp4',flipX:true,hard:{image:'/assets/sakuya-hard.webp',video:'/assets/sakuya-hard.mp4'}},
- 1:{image:'/assets/xiaolan.webp',video:'/assets/xiaolan-medium.mp4',hard:{image:'/assets/xiaolan-hard.webp',video:'/assets/xiaolan-hard.mp4'}},
- 2:{image:'/assets/nemu.webp',video:'/assets/nemu-medium.mp4',hard:{image:'/assets/nemu-hard.webp',video:'/assets/nemu-hard.mp4'}},
- 3:{image:'/assets/izuna.webp',video:'/assets/izuna-medium.mp4',hard:{image:'/assets/izuna-hard.webp',video:'/assets/izuna-hard.mp4'}},
- 4:{image:'/assets/uka.webp',video:'/assets/uka-medium.mp4',hard:{image:'/assets/uka-hard.webp',video:'/assets/uka-hard.mp4'}},
- 5:{image:'/assets/oto.webp',video:'/assets/oto-medium.mp4',hard:{image:'/assets/oto-hard.webp',video:'/assets/oto-hard.mp4'}},
-};
-const igaFaceMedia:Partial<Record<number,FaceMedia&{hard?:FaceMedia}>>={
- 0:{image:'/assets/iga-anne.webp',video:'/assets/iga-anne-medium.mp4',hard:{image:'/assets/iga-anne-hard.webp',video:'/assets/iga-anne-hard.mp4'}},
- 1:{image:'/assets/iga-torika.webp',video:'/assets/iga-torika-medium.mp4',hard:{image:'/assets/iga-torika-hard.webp',video:'/assets/iga-torika-hard.mp4'}},
- 2:{image:'/assets/iga-hayate.webp',video:'/assets/iga-hayate-medium.mp4',hard:{image:'/assets/iga-hayate-hard.webp',video:'/assets/iga-hayate-hard.mp4'}},
- 3:{image:'/assets/iga-yui.webp',video:'/assets/iga-yui-medium.mp4',hard:{image:'/assets/iga-yui-hard.webp',video:'/assets/iga-yui-hard.mp4'}},
- 4:{image:'/assets/iga-shion.webp',video:'/assets/iga-shion-medium.mp4',hard:{image:'/assets/iga-shion-hard.webp',video:'/assets/iga-shion-hard.mp4'}},
- 5:{image:'/assets/iga-sekisyusai.webp',video:'/assets/iga-sekisyusai-medium.mp4',hard:{image:'/assets/iga-sekisyusai-hard.webp',video:'/assets/iga-sekisyusai-hard.mp4'}},
-};
-const fumaFaceMedia:Record<number,FaceMedia&{hard:FaceMedia}>={
- 0:{image:'/assets/fuma-rotten.webp',video:'/assets/fuma-rotten-medium.mp4',hard:{image:'/assets/fuma-rotten-hard.webp',video:'/assets/fuma-rotten-hard.mp4'}},
- 1:{image:'/assets/fuma-atoza.webp',video:'/assets/fuma-atoza-medium.mp4',hard:{image:'/assets/fuma-atoza-hard.webp',video:'/assets/fuma-atoza-hard.mp4'}},
- 2:{image:'/assets/fuma-janome.webp',video:'/assets/fuma-janome-medium.mp4',hard:{image:'/assets/fuma-janome-hard.webp',video:'/assets/fuma-janome-hard.mp4'}},
- 3:{image:'/assets/fuma-karma.webp',video:'/assets/fuma-karma-medium.mp4',hard:{image:'/assets/fuma-karma-hard.webp',video:'/assets/fuma-karma-hard.mp4'}},
- 4:{image:'/assets/fuma-aum.webp',video:'/assets/fuma-aum-medium.mp4',hard:{image:'/assets/fuma-aum-hard.webp',video:'/assets/fuma-aum-hard.mp4'}},
- 5:{image:'/assets/fuma-ibuki.webp',video:'/assets/fuma-ibuki-medium.mp4',hard:{image:'/assets/fuma-ibuki-hard.webp',video:'/assets/fuma-ibuki-hard.mp4'}},
-};
-const saikaFaceMedia:Record<number,FaceMedia&{hard:FaceMedia}>={
- 0:{image:'/assets/saika-shiba.webp',video:'/assets/saika-shiba-medium.mp4',hard:{image:'/assets/saika-shiba-hard.webp',video:'/assets/saika-shiba-hard.mp4'}},
- 1:{image:'/assets/saika-nagisa.webp',video:'/assets/saika-nagisa-medium.mp4',hard:{image:'/assets/saika-nagisa-hard.webp',video:'/assets/saika-nagisa-hard.mp4'}},
- 2:{image:'/assets/saika-mami.webp',video:'/assets/saika-mami-medium.mp4',hard:{image:'/assets/saika-mami-hard.webp',video:'/assets/saika-mami-hard.mp4'}},
- 3:{image:'/assets/saika-benten.webp',video:'/assets/saika-benten-medium.mp4',hard:{image:'/assets/saika-benten-hard.webp',video:'/assets/saika-benten-hard.mp4'}},
- 4:{image:'/assets/saika-seori.webp',video:'/assets/saika-seori-medium.mp4',hard:{image:'/assets/saika-seori-hard.webp',video:'/assets/saika-seori-hard.mp4'}},
- 5:{image:'/assets/saika-magoichi.webp',video:'/assets/saika-magoichi-medium.mp4',hard:{image:'/assets/saika-magoichi-hard.webp',video:'/assets/saika-magoichi-hard.mp4'}},
-};
-const nenokuniFaceMedia:Record<number,FaceMedia&{hard:FaceMedia}>={
- 0:{image:'/assets/nenokuni-sasagane.webp',mediumImage:'/assets/nenokuni-sasagane-medium.webp',video:'/assets/nenokuni-sasagane-medium.mp4',hard:{image:'/assets/nenokuni-sasagane-hard.webp',video:'/assets/nenokuni-sasagane-hard.mp4'}},
- 1:{image:'/assets/nenokuni-gokou.webp',mediumImage:'/assets/nenokuni-gokou-medium.webp',video:'/assets/nenokuni-gokou-medium.mp4',hard:{image:'/assets/nenokuni-gokou-hard.webp',video:'/assets/nenokuni-gokou-hard.mp4'}},
- 2:{image:'/assets/nenokuni-shinra.webp',mediumImage:'/assets/nenokuni-shinra-medium.webp',video:'/assets/nenokuni-shinra-medium.mp4',hard:{image:'/assets/nenokuni-shinra-hard.webp',video:'/assets/nenokuni-shinra-hard.mp4'}},
- 3:{image:'/assets/nenokuni-sasura.webp',mediumImage:'/assets/nenokuni-sasura-medium.webp',video:'/assets/nenokuni-sasura-medium.mp4',hard:{image:'/assets/nenokuni-sasura-hard.webp',video:'/assets/nenokuni-sasura-hard.mp4'}},
- 4:{image:'/assets/nenokuni-yami.webp',mediumImage:'/assets/nenokuni-yami-medium.webp',video:'/assets/nenokuni-yami-medium.mp4',hard:{image:'/assets/nenokuni-yami-hard.webp',video:'/assets/nenokuni-yami-hard.mp4'}},
- 5:{image:'/assets/nenokuni-yomi.webp',mediumImage:'/assets/nenokuni-yomi-medium.webp',video:'/assets/nenokuni-yomi-medium.mp4',hard:{image:'/assets/nenokuni-yomi-hard.webp',video:'/assets/nenokuni-yomi-hard.mp4'}},
-};
-const faceMediaByClan:Record<Clan,Partial<Record<number,FaceMedia&{hard?:FaceMedia}>>>={甲賀:kogaFaceMedia,伊賀:igaFaceMedia,風魔:fumaFaceMedia,雑賀:saikaFaceMedia,根の国:nenokuniFaceMedia};
 
 export function stage3Progress(clan:Clan){
  const names=clanFaceNames[clan].filter((_,i)=>faceMediaByClan[clan][i]?.hard?.video);
@@ -117,11 +74,11 @@ export function Scene({preview=false}:{preview?:boolean}){
  for(let y=0;y<cubeSize;y++)for(let x=0;x<cubeSize;x++){ctx.fillText('↑',x*cell+cell/2,y*cell+cell*.22);ctx.fillText(String(y*cubeSize+x+1),x*cell+cell/2,y*cell+cell*.88);}
  const fallback=new T.CanvasTexture(c);fallback.colorSpace=T.SRGBColorSpace;textures.push(fallback);
  const mat=new T.MeshBasicMaterial({map:fallback});materials.push(mat);
- const base=faceMedia[i],media=base&&difficulty==='hard'&&base.hard?base.hard:base&&difficulty==='medium'&&base.mediumImage?{...base,image:base.mediumImage}:base;let videoReady=false;
+ const media=getFaceMedia(clan,i,difficulty);let videoReady=false;
  if(media)new T.TextureLoader().load(media.image,tex=>{if(disposed){tex.dispose();return;}tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());textures.push(tex);if(!videoReady){mat.map=tex;mat.needsUpdate=true;}},undefined,()=>useGame.setState({notice:`${clanFaceNames[clan][i]}の画像を読み込めません。${media.image} を確認してください。`}));
  if(media?.video&&animateFaces){
   const video=document.createElement('video');videos.push(video);video.className='face-video-source';video.hidden=true;video.setAttribute('aria-hidden','true');video.src=media.video;video.muted=true;video.loop=!media.once;video.playsInline=true;video.preload='auto';video.disablePictureInPicture=true;el.appendChild(video);
-  video.onloadeddata=()=>{if(disposed)return;videoReady=true;const tex=new T.VideoTexture(video);tex.colorSpace=T.SRGBColorSpace;tex.minFilter=T.LinearFilter;tex.magFilter=T.LinearFilter;textures.push(tex);mat.map=tex;mat.needsUpdate=true;if(!useGame.getState().reduced)void video.play().catch(()=>{});};
+  video.onloadeddata=()=>{if(disposed)return;videoReady=true;const tex=new T.VideoTexture(video);tex.colorSpace=T.SRGBColorSpace;tex.minFilter=T.LinearFilter;tex.magFilter=T.LinearFilter;textures.push(tex);mat.map=tex;mat.needsUpdate=true;if(!useGame.getState().reduced&&!useGame.getState().suspended)void video.play().catch(()=>{});};
   video.onerror=()=>useGame.setState({notice:`${clanFaceNames[clan][i]}のアニメを読み込めません。静止画で表示します。${media.video} を確認してください。`});video.load();
  }
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(new Float32Array(perFace*12),3));
@@ -199,7 +156,7 @@ export function Scene({preview=false}:{preview?:boolean}){
  const tick=(now:number)=>{
  frame=requestAnimationFrame(tick);const dt=Math.min((now-previous)/1000,.04);previous=now;
  const state=useGame.getState();
- const videoEnabled=!state.reduced&&document.visibilityState==='visible';
+ const videoEnabled=!state.suspended&&!state.reduced&&document.visibilityState==='visible';
  if(videoEnabled!==lastVideoEnabled){lastVideoEnabled=videoEnabled;videos.forEach(video=>{if(videoEnabled&&video.readyState>=2&&!video.ended)void video.play().catch(()=>{});else video.pause();});}
  if(videoEnabled&&now>=nextVideoRetry){nextVideoRetry=now+1000;videos.forEach(video=>{if(video.paused&&video.readyState>=2&&!video.ended)void video.play().catch(()=>{});});}
  if(state.resetView!==lastReset){lastReset=state.resetView;initial();cancel();controls=null;state.select(null);}

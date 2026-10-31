@@ -27,7 +27,7 @@ try{
   const media=(await snapshot()).media;assert.deepEqual(media.map(v=>v.file),expected);
   const clips=await page.evaluate(()=>[...document.querySelectorAll('.face-video-source')].map(v=>({width:v.videoWidth,height:v.videoHeight,duration:v.duration,loop:v.loop,muted:v.muted,rate:v.playbackRate})));
   for(const clip of clips){assert.equal(clip.width,480);assert.equal(clip.height,480);assert.ok(Math.abs(clip.duration-31/6)<.01);assert.equal(clip.loop,true);assert.equal(clip.muted,true);assert.equal(clip.rate,1);}
-  assert.equal(await page.getByRole('switch',{name:'BGM',exact:true}).isDisabled(),true);
+  assert.equal(await page.getByRole('switch',{name:'BGM',exact:true}).isDisabled(),false);
   if(width===1366){
    await page.waitForFunction(()=>window.__cube.snapshot().media[0].currentTime>4.9,{},{timeout:10000});
    await page.waitForFunction(()=>window.__cube.snapshot().media[0].currentTime<2&&!window.__cube.snapshot().media[0].paused,{},{timeout:5000});
@@ -42,7 +42,7 @@ try{
   await page.waitForFunction(()=>window.__cube.snapshot().selection?.face===0);await page.keyboard.press('w');
   await page.waitForFunction(()=>window.__cube.snapshot().history===1&&!window.__cube.snapshot().busy);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-  results.push({width,media:media.map(v=>v.file),clips,rotation:true,reducedMotion:true,hardDisabled:false,bgmUnassigned:true});
+  results.push({width,media:media.map(v=>v.file),clips,rotation:true,reducedMotion:true,hardDisabled:false,bgmUnassigned:false});
   console.error('PASS Ne no Kuni medium playback/loop/reducedMotion/rotation',width);
  }
  for(const name of names)assert(imageRequests.has(`nenokuni-${name}-medium.webp`),'Missing dedicated medium poster: '+name);
